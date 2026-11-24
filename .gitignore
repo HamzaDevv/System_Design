@@ -9,3 +9,7 @@ dist/
 .env.local
 .vscode/
 .idea/
+
+# Local reference materials (internal knowledge base, never pushed to public repo)
+.references/
+references_internal/

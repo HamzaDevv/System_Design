@@ -1,4 +1,4 @@
-# 🚀 Practical System Design: Zero to Hero & Interactive Lab
+# 🏆 Practical System Design: Zero to Hero & Interactive Lab
 
 > **A curated, first-principles curriculum for mastering distributed systems and system design interviews, paired with interactive browser-based visual simulations.**
 
