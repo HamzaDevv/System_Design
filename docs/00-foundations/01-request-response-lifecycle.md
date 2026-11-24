@@ -66,14 +66,33 @@ Computers route packets using 32-bit (IPv4) or 128-bit (IPv6) numerical identifi
 If all 5 billion internet users queried a single centralized computer for domain lookups, that server would instantly vaporize. Therefore, DNS was designed as **the world’s most successful distributed, hierarchical, read-heavy caching system**.
 
 #### The Resolution Ladder:
+
+```
+[Browser / OS Cache] (Miss!)
+         │
+         ▼
+[Recursive Resolver (1.1.1.1 / 8.8.8.8)]
+         │
+         ├─── 1. Query: "Where is .com?" ─────────────> [Root Server (.)]
+         │<─── Returns: IP of .com TLD Servers ─────────┘
+         │
+         ├─── 2. Query: "Where is example.com?" ──────> [TLD Server (.com)]
+         │<─── Returns: IP of Cloudflare Nameserver ────┘
+         │
+         └─── 3. Query: "What is api.example.com?" ───> [Authoritative NS]
+          <─── Returns: 198.51.100.42 (TTL 300s) ───────┘
+```
+
 1. **Local Browser Cache**: Chrome/Firefox caches DNS mappings for a few minutes.
 2. **Operating System Cache**: If missing, your OS kernel (`/etc/hosts` or system resolver daemon) checks its local DNS cache.
 3. **Recursive DNS Resolver (ISP or `1.1.1.1` / `8.8.8.8`)**:
    - If not cached, the recursive resolver walks the global tree:
-   - **Root Server (`.`)**: 13 root IP addresses replicated worldwide via Anycast. Replies: *"I don't know `api.example.com`, but here are the `.com` TLD servers."*
+   - **Root Server (`.`)**: 13 root IP clusters replicated worldwide via Anycast. Replies: *"I don't know `api.example.com`, but here are the `.com` TLD servers."*
    - **TLD Server (`.com`)**: Managed by Verisign. Replies: *"Here are the Authoritative Name Servers for `example.com` (e.g., Cloudflare/AWS Route53)."*
    - **Authoritative Server (`ns1.cloudflare.com`)**: Holds the ground-truth DNS records (A, AAAA, CNAME). Replies: `"api.example.com = 198.51.100.42"`.
 4. **Caching & TTL**: The response includes a **Time-To-Live (TTL)** in seconds. All intermediate nodes cache this mapping until the TTL expires, shielding the authoritative servers from $99.9\%$ of global traffic.
+
+> 💡 **Notice**: The Client **never queries the target API server** to resolve DNS! The DNS resolution happens entirely in the DNS hierarchy. Only *after* the client receives `198.51.100.42` does it begin connecting to Frankfurt!
 
 ---
 
@@ -85,6 +104,13 @@ Transmission Control Protocol (TCP) sits directly on top of IP (Layer 4) to prov
 1. **In-Order Delivery**: If packets arrive as `3, 1, 2`, TCP buffers them and delivers `1, 2, 3` to the application.
 2. **Loss Recovery**: If packet `2` is lost, TCP automatically requests a retransmission.
 3. **Congestion & Flow Control**: Prevents a fast client from drowning a slow server or flooding an already congested network buffer.
+
+#### The Physical Reality of Packet Routing:
+Packets do not travel across a straight line. Between your laptop and Frankfurt, packets traverse:
+1. **Local Wi-Fi / ISP Gateway**: Converts wireless 5GHz electromagnetic waves into fiber light pulses.
+2. **Autonomous Systems (BGP Core Routers)**: Tier-1 Internet Service Providers (Level 3, Lumen, Telia) route packets based on Border Gateway Protocol (BGP) routing tables.
+3. **Undersea Trans-Atlantic Cables (e.g., MAREA / Dunant)**: Fiber cables sitting $4,000\text{ meters}$ under the Atlantic Ocean. Optical amplifiers boost light signals every $50\text{--}80\text{ km}$.
+4. **Datacenter Edge Router / Reverse Proxy**: Terminates incoming connections and passes them to internal application workers.
 
 #### The 3-Way Handshake (`SYN` $\rightarrow$ `SYN-ACK` $\rightarrow$ `ACK`):
 1. **Client $\rightarrow$ Server: `SYN` (Synchronize)**

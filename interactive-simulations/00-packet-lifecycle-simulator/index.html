@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Request-Response Packet Lifecycle | Visual Lab</title>
+  <title>Realistic Request-Response Lifecycle & DNS Hierarchy | Visual Lab</title>
   <style>
     :root {
-      --bg: #080c15;
-      --card-bg: rgba(18, 24, 38, 0.75);
-      --card-border: rgba(99, 133, 255, 0.15);
+      --bg: #070a13;
+      --card-bg: rgba(15, 21, 35, 0.85);
+      --card-border: rgba(99, 133, 255, 0.16);
       --accent-cyan: #00f2fe;
-      --accent-blue: #4facfe;
+      --accent-blue: #3b82f6;
       --accent-purple: #a855f7;
       --accent-amber: #f59e0b;
       --accent-green: #10b981;
-      --accent-red: #ef4444;
+      --accent-pink: #ec4899;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -32,19 +32,21 @@
       flex-direction: column;
       overflow-x: hidden;
       background-image: 
-        radial-gradient(circle at 20% 10%, rgba(79, 172, 254, 0.07) 0%, transparent 40%),
-        radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.07) 0%, transparent 40%);
+        radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.07) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.07) 0%, transparent 40%);
     }
 
-    /* Minimalist Top Nav */
     header {
-      padding: 1rem 2rem;
+      padding: 0.85rem 1.75rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--card-border);
-      background: rgba(8, 12, 21, 0.85);
+      background: rgba(7, 10, 19, 0.9);
       backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
 
     .brand {
@@ -68,10 +70,10 @@
     .back-link {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.88rem;
-      padding: 0.4rem 0.85rem;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.8rem;
       border-radius: 6px;
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--card-border);
       transition: all 0.2s;
     }
@@ -81,25 +83,24 @@
       border-color: var(--accent-cyan);
     }
 
-    /* Main Container */
     .app-container {
-      max-width: 1100px;
-      margin: 1.5rem auto 2.5rem;
-      padding: 0 1.5rem;
+      max-width: 1280px;
+      margin: 1.25rem auto 2.5rem;
+      padding: 0 1.25rem;
       width: 100%;
       display: flex;
       flex-direction: column;
       gap: 1.25rem;
     }
 
-    /* Horizontal Timeline Stepper */
+    /* Stepper */
     .timeline-nav {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 0.75rem;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 860px) {
       .timeline-nav { grid-template-columns: 1fr 1fr; }
     }
 
@@ -107,14 +108,12 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 10px;
-      padding: 0.85rem 1rem;
+      padding: 0.75rem 1rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.75rem;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
     }
 
     .stage-pill:hover {
@@ -156,7 +155,7 @@
     }
 
     .pill-info strong {
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       display: block;
       color: #fff;
     }
@@ -166,30 +165,30 @@
       color: var(--text-muted);
     }
 
-    /* Canvas Stage Area */
+    /* Canvas Card */
     .canvas-card {
-      background: #060a12;
+      background: #050811;
       border: 1px solid var(--card-border);
       border-radius: 16px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     }
 
     .canvas-header {
-      padding: 0.85rem 1.25rem;
+      padding: 0.75rem 1.25rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      background: rgba(10, 14, 24, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(10, 14, 25, 0.7);
     }
 
     .live-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      font-size: 0.78rem;
+      gap: 0.45rem;
+      font-size: 0.8rem;
       font-family: var(--font-mono);
       color: var(--accent-cyan);
     }
@@ -210,16 +209,15 @@
 
     canvas {
       width: 100%;
-      height: 340px;
+      height: 480px;
       display: block;
     }
 
-    /* Latency HUD overlay */
     .hud-overlay {
       position: absolute;
       top: 3.5rem;
       right: 1.25rem;
-      background: rgba(11, 16, 28, 0.85);
+      background: rgba(10, 15, 26, 0.88);
       backdrop-filter: blur(8px);
       border: 1px solid var(--card-border);
       border-radius: 8px;
@@ -227,14 +225,15 @@
       font-family: var(--font-mono);
       font-size: 0.78rem;
       display: flex;
-      gap: 1rem;
+      gap: 1.2rem;
       pointer-events: none;
+      z-index: 10;
     }
 
     .hud-item span { color: var(--text-muted); }
     .hud-item strong { color: var(--accent-cyan); font-weight: 700; }
 
-    /* Controls Bar */
+    /* Controls */
     .controls-bar {
       display: flex;
       justify-content: space-between;
@@ -249,13 +248,13 @@
 
     .btn-group {
       display: flex;
-      gap: 0.6rem;
+      gap: 0.5rem;
       align-items: center;
     }
 
     button {
       font-family: inherit;
-      padding: 0.55rem 1rem;
+      padding: 0.55rem 1.1rem;
       border-radius: 8px;
       font-size: 0.88rem;
       font-weight: 600;
@@ -288,9 +287,10 @@
     .toggle-group {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
       font-size: 0.82rem;
       color: var(--text-muted);
+      flex-wrap: wrap;
     }
 
     select {
@@ -351,8 +351,8 @@
     <a href="../index.html" class="brand">
       <div class="brand-badge">🌐</div>
       <div>
-        <h1 style="font-size: 1rem; font-weight: 700;">Packet Lifecycle Simulator</h1>
-        <p style="font-size: 0.72rem; color: var(--text-muted);">From Keystroke to Pixels</p>
+        <h1 style="font-size: 1rem; font-weight: 700;">Realistic Network Topology & DNS Hierarchy</h1>
+        <p style="font-size: 0.72rem; color: var(--text-muted);">Hop-by-Hop Trace: Client → DNS Tree → Transit Routers → Server</p>
       </div>
     </a>
     <a href="../index.html" class="back-link">← Simulation Hub</a>
@@ -366,29 +366,29 @@
       <div class="stage-pill active" data-step="1" style="--pill-accent: var(--accent-purple);">
         <div class="pill-num">1</div>
         <div class="pill-info">
-          <strong>DNS Resolution</strong>
-          <span>Domain → IP Address</span>
+          <strong>1. DNS Hierarchy</strong>
+          <span>Resolver → Root → TLD → Auth</span>
         </div>
       </div>
       <div class="stage-pill" data-step="2" style="--pill-accent: var(--accent-amber);">
         <div class="pill-num">2</div>
         <div class="pill-info">
-          <strong>TCP Handshake</strong>
-          <span>SYN → SYN-ACK → ACK</span>
+          <strong>2. TCP Handshake</strong>
+          <span>SYN / SYN-ACK across Routers</span>
         </div>
       </div>
       <div class="stage-pill" data-step="3" style="--pill-accent: var(--accent-cyan);">
         <div class="pill-num">3</div>
         <div class="pill-info">
-          <strong>TLS 1.3 Key Share</strong>
-          <span>Diffie-Hellman Ephemeral</span>
+          <strong>3. TLS 1.3 Key Share</strong>
+          <span>Diffie-Hellman Key Exchange</span>
         </div>
       </div>
       <div class="stage-pill" data-step="4" style="--pill-accent: var(--accent-green);">
         <div class="pill-num">4</div>
         <div class="pill-info">
-          <strong>HTTP / 200 OK</strong>
-          <span>Encrypted Payload Stream</span>
+          <strong>4. HTTP / 200 OK</strong>
+          <span>Encrypted Payload & DB Query</span>
         </div>
       </div>
     </nav>
@@ -401,13 +401,14 @@
           <span id="wireStatus">Ready to Dispatch</span>
         </div>
         <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">
-          Target: https://api.example.com/checkout
+          Domain: api.example.com → 198.51.100.42
         </span>
       </div>
 
       <div class="hud-overlay">
+        <div class="hud-item"><span>Hop Count:</span> <strong id="hudHops">0 hops</strong></div>
         <div class="hud-item"><span>Roundtrips:</span> <strong id="hudRtt">0 RTT</strong></div>
-        <div class="hud-item"><span>Wall-Clock Time:</span> <strong id="hudLatency">0 ms</strong></div>
+        <div class="hud-item"><span>Accumulated Latency:</span> <strong id="hudLatency">0 ms</strong></div>
       </div>
 
       <canvas id="stageCanvas"></canvas>
@@ -422,75 +423,83 @@
       </div>
 
       <div class="toggle-group">
-        <span>Connection:</span>
+        <span>Packet Speed:</span>
+        <select id="packetSpeed">
+          <option value="slow" selected>🐢 Slow Motion (Clear & Educational)</option>
+          <option value="normal">Normal Speed</option>
+          <option value="fast">Fast</option>
+        </select>
+
+        <span style="margin-left: 0.5rem;">Connection:</span>
         <select id="connMode">
           <option value="cold" selected>Cold Connection (Full Handshake)</option>
           <option value="warm">Warm Keep-Alive (Reused Socket - 0 RTT)</option>
         </select>
-
-        <span style="margin-left: 0.75rem;">Wire Distance:</span>
-        <select id="wireLatency">
-          <option value="15">Local City (15ms RTT)</option>
-          <option value="80" selected>US Coast-to-Coast (80ms RTT)</option>
-          <option value="150">Trans-Atlantic (150ms RTT)</option>
-        </select>
       </div>
     </div>
 
-    <!-- Clear First-Principles Insight Card -->
+    <!-- First-Principles Insight Card -->
     <section class="insight-card" id="insightCard">
       <div class="insight-title">
         <span>💡</span>
-        <span id="insightHeading">Welcome to the Packet Lifecycle Simulator</span>
+        <span id="insightHeading">Stage 0: Realistic Network Architecture</span>
       </div>
       <div class="insight-desc" id="insightBody">
-        Click <strong>"Next Step"</strong> or select any stage above to trace the journey of an HTTP request across undersea fiber optic cables. Notice how physical distance dictates minimum response time before your server can execute a single line of business logic!
+        Notice the physical topology above: The Internet is <strong>not</strong> a straight line. 
+        In <strong>Stage 1</strong>, observe how DNS queries do not touch the destination server at all—instead, the Recursive Resolver queries the Root (<code>.</code>), TLD (<code>.com</code>), and Authoritative nameservers! 
+        In <strong>Stages 2–4</strong>, watch packets traverse local gateways, BGP transit routers, and undersea fiber optic cables to reach Frankfurt.
       </div>
       <div id="insightPills" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.35rem;">
-        <span class="packet-badge">4 Stages</span>
-        <span class="packet-badge">First-Principles Discovery</span>
+        <span class="packet-badge">DNS Tree Top</span>
+        <span class="packet-badge">Multi-Hop BGP Routers</span>
+        <span class="packet-badge">Undersea Fiber Cable</span>
       </div>
     </section>
 
   </main>
 
   <script>
+    // --- TOPOLOGY COORDINATES (Relative to canvas dimensions) ---
+    // Nodes layout:
+    // Left: Client -> ISP Gateway
+    // Top: DNS Resolver -> Root (.) -> TLD (.com) -> Authoritative
+    // Bottom: BGP Router 1 (US) -> Undersea Cable -> BGP Router 2 (EU) -> Edge Proxy -> API Server (Frankfurt)
+
+    const nodes = {
+      client: { id: "client", label: "💻 Client (SF)", sub: "192.168.1.15", type: "device", rx: 0.08, ry: 0.65 },
+      isp:    { id: "isp", label: "📡 ISP Gateway", sub: "Hop 1", type: "router", rx: 0.22, ry: 0.65 },
+
+      // DNS Hierarchy (Top)
+      resolver: { id: "resolver", label: "🔄 Resolver", sub: "1.1.1.1 / 8.8.8.8", type: "dns", rx: 0.32, ry: 0.22 },
+      root:     { id: "root", label: "🏛️ Root (.)", sub: "13 Global Root IPs", type: "dns", rx: 0.52, ry: 0.12 },
+      tld:      { id: "tld", label: "🏢 TLD (.com)", sub: "Verisign Registry", type: "dns", rx: 0.70, ry: 0.12 },
+      auth:     { id: "auth", label: "🛡️ Authoritative", sub: "Cloudflare/Route53", type: "dns", rx: 0.88, ry: 0.22 },
+
+      // Internet Transit Path (Bottom)
+      bgpUS:    { id: "bgpUS", label: "🌐 BGP Core (US)", sub: "Autonomous Sys", type: "router", rx: 0.38, ry: 0.72 },
+      undersea: { id: "undersea", label: "🌊 Undersea Fiber", sub: "Trans-Atlantic Cable", type: "cable", rx: 0.56, ry: 0.78 },
+      bgpEU:    { id: "bgpEU", label: "🌐 BGP Core (EU)", sub: "DE-CIX Frankfurt", type: "router", rx: 0.74, ry: 0.72 },
+      edge:     { id: "edge", label: "🛡️ Edge Proxy", sub: "Load Balancer", type: "router", rx: 0.86, ry: 0.65 },
+      server:   { id: "server", label: "🏢 API Server", sub: "198.51.100.42 (DE)", type: "server", rx: 0.95, ry: 0.65 }
+    };
+
     // --- STATE ---
-    let currentStep = 0; // 0: Start, 1: DNS, 2: TCP, 3: TLS, 4: HTTP
-    let rttMs = 80;
+    let currentStep = 0; // 1: DNS, 2: TCP, 3: TLS, 4: HTTP
     let accumulatedMs = 0;
     let accumulatedRtts = 0;
+    let accumulatedHops = 0;
     let autoInterval = null;
     let packets = [];
     let isWireEncrypted = false;
+    let activeLegIndex = 0;
+    let activePathSequence = [];
 
-    const stageData = [
-      {
-        title: "Stage 0: Idle State",
-        body: "Client is preparing to make an HTTPS request to 'https://api.example.com/checkout'.",
-        pills: ["Awaiting user dispatch"]
-      },
-      {
-        title: "Stage 1: The Naming Problem (DNS Resolution)",
-        body: "Computers route packets by IP address (198.51.100.42), not human domain names. The client queries the recursive DNS hierarchy to discover where 'api.example.com' lives on the global internet.",
-        pills: ["Protocol: UDP", "Cost: 1 RTT (~80ms)", "Cached with TTL"]
-      },
-      {
-        title: "Stage 2: The Reliability Problem (TCP 3-Way Handshake)",
-        body: "Raw IP drops and reorders packets. TCP establishes an ordered, reliable byte stream: Client sends SYN (Seq=x), Server replies SYN-ACK (Seq=y, Ack=x+1), Client responds with ACK. No business data transmitted yet!",
-        pills: ["Protocol: TCP Layer 4", "Cost: 1 RTT (~80ms)", "Reliable Byte Stream"]
-      },
-      {
-        title: "Stage 3: The Eavesdropper Problem (TLS 1.3 Key Share)",
-        body: "To prevent wiretapping on undersea cables, Client and Server exchange Diffie-Hellman public parameters in 1 RTT. Both compute the exact same symmetric key without sending the secret across the wire. The pipe is now encrypted with AES-256-GCM!",
-        pills: ["Protocol: TLS 1.3", "Diffie-Hellman Key Exchange", "AES-256-GCM Activated"]
-      },
-      {
-        title: "Stage 4: The Semantic Problem (HTTP Request & 200 OK)",
-        body: "Now that the encrypted pipe is ready, the client streams the encrypted HTTP POST payload. The server reads the socket, executes the database checkout in 20ms, and returns HTTP 200 OK!",
-        pills: ["HTTP/1.1 or HTTP/2", "Cost: 1 RTT + 20ms DB", "Order Confirmed"]
-      }
-    ];
+    // Speed configuration
+    const speedMap = {
+      slow: { hopMs: 1400 },
+      normal: { hopMs: 800 },
+      fast: { hopMs: 380 }
+    };
 
     // --- DOM REFS ---
     const canvas = document.getElementById("stageCanvas");
@@ -499,9 +508,10 @@
     const btnAuto = document.getElementById("btnAutoPlay");
     const btnReset = document.getElementById("btnReset");
     const connMode = document.getElementById("connMode");
-    const wireLatency = document.getElementById("wireLatency");
+    const packetSpeed = document.getElementById("packetSpeed");
     const hudRtt = document.getElementById("hudRtt");
     const hudLatency = document.getElementById("hudLatency");
+    const hudHops = document.getElementById("hudHops");
     const wireStatus = document.getElementById("wireStatus");
     const insightHeading = document.getElementById("insightHeading");
     const insightBody = document.getElementById("insightBody");
@@ -510,32 +520,14 @@
 
     function resizeCanvas() {
       canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = 340;
+      canvas.height = 480;
     }
     window.addEventListener("resize", resizeCanvas);
     resizeCanvas();
 
-    wireLatency.addEventListener("change", (e) => {
-      rttMs = parseInt(e.target.value);
-    });
-
-    // --- ANIMATION PARTICLES ---
-    function spawnPacket(fromClient, label, color, durationMs, onDone) {
-      const clientX = 120;
-      const clientY = canvas.height / 2;
-      const serverX = canvas.width - 120;
-      const serverY = canvas.height / 2;
-
-      packets.push({
-        startX: fromClient ? clientX : serverX,
-        endX: fromClient ? serverX : clientX,
-        y: clientY,
-        progress: 0,
-        speed: 1 / (durationMs / 16.6),
-        label,
-        color,
-        onDone
-      });
+    function getNodePos(nodeKey) {
+      const n = nodes[nodeKey];
+      return { x: n.rx * canvas.width, y: n.ry * canvas.height };
     }
 
     function updateUI() {
@@ -545,16 +537,53 @@
         if (idx + 1 < currentStep) p.classList.add("completed");
       });
 
-      const cur = stageData[currentStep] || stageData[0];
-      insightHeading.innerText = cur.title;
-      insightBody.innerText = cur.body;
-      insightPills.innerHTML = cur.pills.map(p => `<span class="packet-badge">${p}</span>`).join("");
-
       hudRtt.innerText = `${accumulatedRtts} RTT`;
       hudLatency.innerText = `${accumulatedMs} ms`;
+      hudHops.innerText = `${accumulatedHops} hops`;
     }
 
-    // --- STEP FORWARD ENGINE ---
+    // --- PACKET RUNNER OVER MULTI-NODE PATH ---
+    function runHopSequence(sequence, onComplete) {
+      // sequence: array of { from: 'client', to: 'isp', label: 'DNS Query', color: '#a855f7', msCost: 15 }
+      let index = 0;
+
+      function nextHop() {
+        if (index >= sequence.length) {
+          if (onComplete) onComplete();
+          return;
+        }
+
+        const leg = sequence[index];
+        index++;
+
+        const start = getNodePos(leg.from);
+        const end = getNodePos(leg.to);
+        const speedConf = speedMap[packetSpeed.value] || speedMap.slow;
+
+        accumulatedHops++;
+        accumulatedMs += leg.msCost || 15;
+        updateUI();
+
+        wireStatus.innerText = `${leg.label}: ${nodes[leg.from].label} → ${nodes[leg.to].label}`;
+
+        packets.push({
+          startX: start.x, startY: start.y,
+          endX: end.x, endY: end.y,
+          x: start.x, y: start.y,
+          progress: 0,
+          speed: 1 / (speedConf.hopMs / 16.6),
+          label: leg.label,
+          color: leg.color,
+          onDone: () => {
+            nextHop();
+          }
+        });
+      }
+
+      nextHop();
+    }
+
+    // --- STEP IMPLEMENTATION ---
     function advanceStep() {
       if (currentStep >= 4) {
         if (autoInterval) clearInterval(autoInterval);
@@ -566,84 +595,176 @@
       updateUI();
 
       if (currentStep === 1) {
-        // DNS
+        // --- STAGE 1: DNS HIERARCHY RESOLUTION ---
         if (connMode.value === "warm") {
-          wireStatus.innerText = "DNS: Cached in Socket Pool (0ms)";
+          wireStatus.innerText = "DNS: IP Cached Locally in Socket Pool (0ms)";
           advanceStep();
           return;
         }
 
-        wireStatus.innerText = "Resolving DNS: api.example.com...";
-        spawnPacket(true, "DNS Query: api.example.com", "#a855f7", 600, () => {
-          spawnPacket(false, "DNS Response: 198.51.100.42", "#a855f7", 600, () => {
-            accumulatedRtts += 1;
-            accumulatedMs += rttMs;
-            updateUI();
-            wireStatus.innerText = "DNS Resolved: 198.51.100.42 (1 RTT)";
-          });
+        insightHeading.innerText = "Stage 1: Inside the DNS Hierarchy";
+        insightBody.innerHTML = `
+          <strong>Notice: The client does NOT query the Frankfurt server!</strong><br>
+          1. Client queries the <strong>Recursive Resolver (1.1.1.1)</strong> via ISP.<br>
+          2. Resolver asks the <strong>Root Server (.)</strong>: <em>"Where is .com?"</em><br>
+          3. Resolver asks the <strong>TLD Server (.com)</strong>: <em>"Where is example.com?"</em><br>
+          4. Resolver queries the <strong>Authoritative Nameserver</strong>: Returns IP <code>198.51.100.42</code> (TTL 300s).<br>
+          5. Resolver returns the resolved IP back to the Client!
+        `;
+        insightPills.innerHTML = `
+          <span class="packet-badge">No API Server Traffic Yet</span>
+          <span class="packet-badge">Recursive Resolver Hierarchy</span>
+          <span class="packet-badge">TTL Caching at Every Level</span>
+        `;
+
+        const dnsSequence = [
+          { from: 'client', to: 'isp', label: "DNS: 'api.example.com'?", color: "#a855f7", msCost: 5 },
+          { from: 'isp', to: 'resolver', label: "Query Recursive Resolver", color: "#a855f7", msCost: 10 },
+          { from: 'resolver', to: 'root', label: "1. Ask Root: 'Where is .com?'", color: "#a855f7", msCost: 20 },
+          { from: 'root', to: 'resolver', label: "Root: 'Go to .com TLD'", color: "#a855f7", msCost: 20 },
+          { from: 'resolver', to: 'tld', label: "2. Ask TLD: 'Where is example.com?'", color: "#a855f7", msCost: 25 },
+          { from: 'tld', to: 'resolver', label: "TLD: 'Go to Cloudflare Auth NS'", color: "#a855f7", msCost: 25 },
+          { from: 'resolver', to: 'auth', label: "3. Ask Auth NS: 'What is api IP?'", color: "#a855f7", msCost: 20 },
+          { from: 'auth', to: 'resolver', label: "Auth: '198.51.100.42 (TTL 300s)'", color: "#a855f7", msCost: 20 },
+          { from: 'resolver', to: 'isp', label: "Return IP: 198.51.100.42", color: "#a855f7", msCost: 10 },
+          { from: 'isp', to: 'client', label: "Deliver IP to Browser", color: "#a855f7", msCost: 5 }
+        ];
+
+        runHopSequence(dnsSequence, () => {
+          accumulatedRtts += 1;
+          updateUI();
+          wireStatus.innerText = "DNS Complete! Client now knows IP: 198.51.100.42";
         });
       }
 
       else if (currentStep === 2) {
-        // TCP
+        // --- STAGE 2: TCP 3-WAY HANDSHAKE (TRANSIT HOPS) ---
         if (connMode.value === "warm") {
-          wireStatus.innerText = "TCP: Reusing Established Socket (0 RTT)";
+          wireStatus.innerText = "TCP: Reusing Established Socket Pipe (0 RTT)";
           advanceStep();
           return;
         }
 
-        wireStatus.innerText = "TCP 3-Way Handshake...";
-        spawnPacket(true, "SYN (Seq=1000)", "#f59e0b", 450, () => {
-          spawnPacket(false, "SYN-ACK (Ack=1001)", "#f59e0b", 450, () => {
-            spawnPacket(true, "ACK (Seq=1001)", "#f59e0b", 450, () => {
-              accumulatedRtts += 1;
-              accumulatedMs += rttMs;
-              updateUI();
-              wireStatus.innerText = "TCP Pipe Established (1 RTT)";
-            });
-          });
+        insightHeading.innerText = "Stage 2: TCP 3-Way Handshake via Internet Routers";
+        insightBody.innerHTML = `
+          The client now initiates a TCP socket connection directly to <code>198.51.100.42:443</code>.<br>
+          Packets do not teleport: they hop through the <strong>ISP Gateway</strong>, cross <strong>BGP Autonomous Systems</strong>, traverse the <strong>Trans-Atlantic Undersea Fiber Cable</strong>, pass through the Datacenter <strong>Edge Proxy</strong>, and reach the <strong>API Server</strong>!<br>
+          SYN → SYN-ACK → ACK consumes 1 full Round-Trip across physical ocean cables.
+        `;
+        insightPills.innerHTML = `
+          <span class="packet-badge">SYN (Seq=1000)</span>
+          <span class="packet-badge">SYN-ACK (Seq=5000, Ack=1001)</span>
+          <span class="packet-badge">ACK (Ack=5001)</span>
+        `;
+
+        const tcpSequence = [
+          // SYN outward
+          { from: 'client', to: 'isp', label: "SYN (Seq=1000)", color: "#f59e0b", msCost: 5 },
+          { from: 'isp', to: 'bgpUS', label: "SYN", color: "#f59e0b", msCost: 15 },
+          { from: 'bgpUS', to: 'undersea', label: "SYN (Undersea Fiber)", color: "#f59e0b", msCost: 35 },
+          { from: 'undersea', to: 'bgpEU', label: "SYN (Transit Europe)", color: "#f59e0b", msCost: 15 },
+          { from: 'bgpEU', to: 'edge', label: "SYN (Datacenter)", color: "#f59e0b", msCost: 5 },
+          { from: 'edge', to: 'server', label: "SYN → Kernel Socket", color: "#f59e0b", msCost: 5 },
+
+          // SYN-ACK return
+          { from: 'server', to: 'edge', label: "SYN-ACK", color: "#f59e0b", msCost: 5 },
+          { from: 'edge', to: 'bgpEU', label: "SYN-ACK", color: "#f59e0b", msCost: 5 },
+          { from: 'bgpEU', to: 'undersea', label: "SYN-ACK (Undersea Fiber)", color: "#f59e0b", msCost: 35 },
+          { from: 'undersea', to: 'bgpUS', label: "SYN-ACK", color: "#f59e0b", msCost: 15 },
+          { from: 'bgpUS', to: 'isp', label: "SYN-ACK", color: "#f59e0b", msCost: 15 },
+          { from: 'isp', to: 'client', label: "SYN-ACK Delivered", color: "#f59e0b", msCost: 5 },
+
+          // ACK outward
+          { from: 'client', to: 'isp', label: "ACK (Ack=5001)", color: "#f59e0b", msCost: 5 },
+          { from: 'isp', to: 'undersea', label: "ACK", color: "#f59e0b", msCost: 40 },
+          { from: 'undersea', to: 'server', label: "ACK → Connection Established!", color: "#f59e0b", msCost: 40 }
+        ];
+
+        runHopSequence(tcpSequence, () => {
+          accumulatedRtts += 1;
+          updateUI();
+          wireStatus.innerText = "TCP Connection Established across 6 transit hops!";
         });
       }
 
       else if (currentStep === 3) {
-        // TLS 1.3
+        // --- STAGE 3: TLS 1.3 KEY SHARE ---
         if (connMode.value === "warm") {
           wireStatus.innerText = "TLS: Reusing Warm TLS Session (0 RTT)";
           advanceStep();
           return;
         }
 
-        wireStatus.innerText = "TLS 1.3 Key Exchange...";
-        spawnPacket(true, "ClientHello + Key Share", "#00f2fe", 600, () => {
-          spawnPacket(false, "ServerHello + Cert + Finished", "#00f2fe", 600, () => {
-            accumulatedRtts += 1;
-            accumulatedMs += rttMs;
-            isWireEncrypted = true;
-            updateUI();
-            wireStatus.innerText = "🔒 Secure AES-256-GCM Pipe Active!";
-          });
+        insightHeading.innerText = "Stage 3: TLS 1.3 Handshake (Diffie-Hellman Key Exchange)";
+        insightBody.innerHTML = `
+          The TCP pipe is open, but unencrypted. Anyone tapping the undersea fiber cable could snoop on data.<br>
+          Client and Server exchange <strong>Diffie-Hellman public key shares</strong> in 1 RTT.<br>
+          Both sides independently compute the exact same symmetric session key. <strong>AES-256-GCM encryption is now activated!</strong>
+        `;
+        insightPills.innerHTML = `
+          <span class="packet-badge">ClientHello + Key Share</span>
+          <span class="packet-badge">ServerHello + Cert + Finished</span>
+          <span class="packet-badge">AES-256-GCM Activated</span>
+        `;
+
+        const tlsSequence = [
+          { from: 'client', to: 'isp', label: "ClientHello + Key Share", color: "#00f2fe", msCost: 5 },
+          { from: 'isp', to: 'undersea', label: "ClientHello across Ocean", color: "#00f2fe", msCost: 40 },
+          { from: 'undersea', to: 'server', label: "ClientHello Delivered", color: "#00f2fe", msCost: 35 },
+
+          { from: 'server', to: 'edge', label: "ServerHello + Cert", color: "#00f2fe", msCost: 5 },
+          { from: 'edge', to: 'undersea', label: "ServerHello across Ocean", color: "#00f2fe", msCost: 35 },
+          { from: 'undersea', to: 'client', label: "TLS Complete → Keys Derived!", color: "#00f2fe", msCost: 40 }
+        ];
+
+        runHopSequence(tlsSequence, () => {
+          accumulatedRtts += 1;
+          isWireEncrypted = true;
+          updateUI();
+          wireStatus.innerText = "🔒 Secure Encrypted Channel Active across all Routers!";
         });
       }
 
       else if (currentStep === 4) {
-        // HTTP Request
-        wireStatus.innerText = "Streaming Encrypted HTTP Request...";
-        spawnPacket(true, "POST /v1/checkout (Encrypted)", "#10b981", 600, () => {
-          wireStatus.innerText = "Server Processing Database Query (20ms)...";
-          setTimeout(() => {
-            spawnPacket(false, "HTTP/1.1 200 OK (Confirmed)", "#10b981", 600, () => {
-              accumulatedRtts += 1;
-              accumulatedMs += (rttMs + 20);
-              updateUI();
-              wireStatus.innerText = "🎉 Request Complete! (200 OK)";
-              insightHeading.innerHTML = "🎉 Lifecycle Complete: First-Principles Takeaway";
-              insightBody.innerHTML = `
-                Notice that out of <strong>${accumulatedMs}ms</strong> total request time, 
-                <strong>${accumulatedMs - 20}ms</strong> was spent purely waiting on speed-of-light networking handshakes! 
-                This is why system designers prioritize <strong>CDNs</strong>, <strong>HTTP Keep-Alive</strong>, and <strong>HTTP/3 QUIC</strong>!
-              `;
-            });
-          }, 350);
+        // --- STAGE 4: HTTP REQUEST & RESPONSE ---
+        insightHeading.innerText = "Stage 4: Encrypted HTTP Application Stream";
+        insightBody.innerHTML = `
+          The secure tunnel is active. The browser sends an encrypted <code>POST /v1/checkout</code>.<br>
+          The packets traverse the routers, arrive at the Frankfurt API server, execute database updates (20ms), and return <code>HTTP/1.1 200 OK (Confirmed)</code>!
+        `;
+        insightPills.innerHTML = `
+          <span class="packet-badge">POST /checkout (Encrypted)</span>
+          <span class="packet-badge">Database Execution (20ms)</span>
+          <span class="packet-badge">200 OK Confirmed</span>
+        `;
+
+        const httpSequence = [
+          { from: 'client', to: 'isp', label: "Encrypted POST /checkout", color: "#10b981", msCost: 5 },
+          { from: 'isp', to: 'undersea', label: "Encrypted Payload across Ocean", color: "#10b981", msCost: 40 },
+          { from: 'undersea', to: 'server', label: "Server Receives Payload", color: "#10b981", msCost: 35 },
+
+          // DB execution pause
+          { from: 'server', to: 'server', label: "💾 DB Query Processing (20ms)", color: "#ec4899", msCost: 20 },
+
+          // Response return
+          { from: 'server', to: 'edge', label: "HTTP 200 OK", color: "#10b981", msCost: 5 },
+          { from: 'edge', to: 'undersea', label: "200 OK across Ocean", color: "#10b981", msCost: 35 },
+          { from: 'undersea', to: 'client', label: "🎉 Order Confirmed Rendered!", color: "#10b981", msCost: 40 }
+        ];
+
+        runHopSequence(httpSequence, () => {
+          accumulatedRtts += 1;
+          updateUI();
+          wireStatus.innerText = "🎉 Request Complete! Order Confirmed Rendered on Screen!";
+          insightHeading.innerHTML = "🎉 Full Journey Complete: The Core Takeaway";
+          insightBody.innerHTML = `
+            Look at the final metrics above:<br>
+            • <strong>Total Hops:</strong> ${accumulatedHops} intermediate network hops.<br>
+            • <strong>Total Time:</strong> ${accumulatedMs} ms.<br>
+            Out of ${accumulatedMs}ms, <strong>only 20ms was actual server computation</strong>! 
+            More than 90% was spent navigating the DNS tree, BGP routers, and undersea fiber cables. 
+            This is why CDN edge routing, connection reuse, and HTTP/3 are essential for real-world system design!
+          `;
         });
       }
     }
@@ -666,7 +787,7 @@
           } else {
             advanceStep();
           }
-        }, 1600);
+        }, 5500); // Allow time for hops to complete
       }
     });
 
@@ -677,13 +798,17 @@
       currentStep = 0;
       accumulatedMs = 0;
       accumulatedRtts = 0;
+      accumulatedHops = 0;
       isWireEncrypted = false;
       packets = [];
       wireStatus.innerText = "Ready to Dispatch";
+      insightHeading.innerText = "Stage 0: Realistic Network Architecture";
+      insightBody.innerHTML = "Notice the physical topology above. Press <strong>'Next Step'</strong> to observe how DNS resolves across the hierarchy before any traffic reaches Frankfurt!";
+      insightPills.innerHTML = '<span class="packet-badge">DNS Tree Top</span><span class="packet-badge">Multi-Hop BGP Routers</span><span class="packet-badge">Undersea Fiber Cable</span>';
       updateUI();
     });
 
-    // Allow clicking on any timeline stage directly
+    // Pill direct click
     pills.forEach((p, idx) => {
       p.addEventListener("click", () => {
         currentStep = idx;
@@ -695,85 +820,105 @@
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const clientX = 120;
-      const clientY = canvas.height / 2;
-      const serverX = canvas.width - 120;
-      const serverY = canvas.height / 2;
+      // Helper function to draw wires
+      function drawWire(fromKey, toKey, isEncryptedPath = false, isDns = false) {
+        const p1 = getNodePos(fromKey);
+        const p2 = getNodePos(toKey);
 
-      // Draw Undersea Cable / Fiber Wire
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(clientX, clientY);
-      ctx.lineTo(serverX, serverY);
-      if (isWireEncrypted) {
-        ctx.strokeStyle = "rgba(0, 242, 254, 0.4)";
-        ctx.shadowColor = "#00f2fe";
-        ctx.shadowBlur = 12;
-      } else {
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
-        ctx.shadowBlur = 0;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+
+        if (isEncryptedPath && isWireEncrypted) {
+          ctx.strokeStyle = "rgba(0, 242, 254, 0.45)";
+          ctx.shadowColor = "#00f2fe";
+          ctx.shadowBlur = 10;
+          ctx.lineWidth = 3;
+        } else if (isDns) {
+          ctx.strokeStyle = "rgba(168, 85, 247, 0.25)";
+          ctx.setLineDash([3, 3]);
+          ctx.lineWidth = 2;
+        } else {
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+          ctx.lineWidth = 2;
+        }
+        ctx.stroke();
+        ctx.restore();
       }
-      ctx.lineWidth = 4;
-      ctx.stroke();
-      ctx.restore();
 
-      // Middle Lock indicator if encrypted
+      // Draw DNS connections (Top tree)
+      drawWire("isp", "resolver", false, true);
+      drawWire("resolver", "root", false, true);
+      drawWire("resolver", "tld", false, true);
+      drawWire("resolver", "auth", false, true);
+
+      // Draw Transit connections (Bottom path)
+      drawWire("client", "isp", true);
+      drawWire("isp", "bgpUS", true);
+      drawWire("bgpUS", "undersea", true);
+      drawWire("undersea", "bgpEU", true);
+      drawWire("bgpEU", "edge", true);
+      drawWire("edge", "server", true);
+
+      // Middle Lock icon on undersea cable if encrypted
       if (isWireEncrypted) {
-        const midX = (clientX + serverX) / 2;
+        const u = getNodePos("undersea");
         ctx.save();
         ctx.fillStyle = "#0c1424";
         ctx.strokeStyle = "#00f2fe";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(midX, clientY, 18, 0, Math.PI * 2);
+        ctx.arc(u.x, u.y - 30, 14, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = "#00f2fe";
-        ctx.font = "14px sans-serif";
+        ctx.font = "11px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("🔒", midX, clientY + 5);
+        ctx.fillText("🔒", u.x, u.y - 26);
         ctx.restore();
       }
 
-      // Draw Client (Browser) Node
-      ctx.save();
-      ctx.fillStyle = "#111827";
-      ctx.strokeStyle = "#3b82f6";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(clientX, clientY, 34, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+      // Draw Nodes
+      Object.keys(nodes).forEach(key => {
+        const n = nodes[key];
+        const pos = getNodePos(key);
 
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("💻 BROWSER", clientX, clientY - 4);
-      ctx.font = "10px monospace";
-      ctx.fillStyle = "#94a3b8";
-      ctx.fillText("Client (SF)", clientX, clientY + 12);
+        ctx.save();
+        let strokeCol = "#475569";
+        let fillCol = "#0d1322";
+        let radius = 22;
 
-      // Draw Server (Frankfurt) Node
-      ctx.save();
-      ctx.fillStyle = "#111827";
-      ctx.strokeStyle = isWireEncrypted ? "#10b981" : "#4b5563";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(serverX, serverY, 34, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+        if (n.type === "device") { strokeCol = "#3b82f6"; radius = 26; }
+        if (n.type === "server") { strokeCol = isWireEncrypted ? "#10b981" : "#3b82f6"; radius = 26; }
+        if (n.type === "dns") { strokeCol = "#a855f7"; radius = 20; }
+        if (n.type === "cable") { strokeCol = "#06b6d4"; radius = 18; }
+        if (n.type === "router") { strokeCol = "#64748b"; radius = 18; }
 
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("🏢 SERVER", serverX, serverY - 4);
-      ctx.font = "10px monospace";
-      ctx.fillStyle = isWireEncrypted ? "#10b981" : "#94a3b8";
-      ctx.fillText("Frankfurt (DE)", serverX, serverY + 12);
+        ctx.shadowColor = strokeCol;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = fillCol;
+        ctx.strokeStyle = strokeCol;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
 
-      // Draw Packets
+        // Node Label
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 11px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(n.label, pos.x, pos.y + radius + 14);
+
+        // Subtext
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "9px monospace";
+        ctx.fillText(n.sub, pos.x, pos.y + radius + 25);
+      });
+
+      // Draw and Update Active Packets
       for (let i = packets.length - 1; i >= 0; i--) {
         const p = packets[i];
         p.progress += p.speed;
@@ -781,30 +926,31 @@
         // Smooth cubic easing
         const t = Math.min(1, p.progress);
         const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-        const curX = p.startX + (p.endX - p.startX) * ease;
+        p.x = p.startX + (p.endX - p.startX) * ease;
+        p.y = p.startY + (p.endY - p.startY) * ease;
 
-        // Packet Glowing Orb
+        // Glowing packet dot
         ctx.save();
         ctx.fillStyle = p.color;
         ctx.shadowColor = p.color;
-        ctx.shadowBlur = 16;
+        ctx.shadowBlur = 14;
         ctx.beginPath();
-        ctx.arc(curX, p.y, 8, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
-        // Packet Text Label with pill background
+        // Packet Label Pill
         ctx.save();
-        ctx.font = "bold 11px monospace";
-        const textWidth = ctx.measureText(p.label).width;
-        ctx.fillStyle = "rgba(8, 12, 21, 0.85)";
-        ctx.fillRect(curX - textWidth / 2 - 6, p.y - 28, textWidth + 12, 18);
+        ctx.font = "bold 10px monospace";
+        const tw = ctx.measureText(p.label).width;
+        ctx.fillStyle = "rgba(7, 10, 19, 0.9)";
+        ctx.fillRect(p.x - tw/2 - 6, p.y - 25, tw + 12, 17);
         ctx.strokeStyle = p.color;
         ctx.lineWidth = 1;
-        ctx.strokeRect(curX - textWidth / 2 - 6, p.y - 28, textWidth + 12, 18);
+        ctx.strokeRect(p.x - tw/2 - 6, p.y - 25, tw + 12, 17);
         ctx.fillStyle = p.color;
         ctx.textAlign = "center";
-        ctx.fillText(p.label, curX, p.y - 15);
+        ctx.fillText(p.label, p.x, p.y - 13);
         ctx.restore();
 
         if (p.progress >= 1) {
