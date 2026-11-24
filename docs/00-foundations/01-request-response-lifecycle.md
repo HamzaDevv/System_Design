@@ -27,6 +27,8 @@ To achieve this, computer scientists had to solve **four fundamental physical di
 
 ## 🪜 The Complete Journey: Visualized
 
+![The Request-Response Lifecycle: From Keystroke to Pixels](../assets/images/request-response-lifecycle.jpg)
+
 ```mermaid
 sequenceDiagram
     autonumber

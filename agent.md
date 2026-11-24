@@ -16,22 +16,22 @@ We do not treat system design as a trivia contest of buzzwords. We approach ever
 For every single topic in our roadmap, we execute this sequence:
 
 ```
-[1. First-Principles Discussion] ──> [2. Deep Markdown Guide (docs/)]
+[1. First-Principles Discussion] ──> [2. Deep Markdown Guide with AI Visuals (docs/)]
                                                    │
                                                    ▼
-[4. Git Commit & Checkpoint Update] <── [3. Interactive Web Lab]
+[4. Git Commit & Checkpoint Update] <── [3. Smooth, Focused Interactive Lab]
 ```
 
 1. **Step 1: First-Principles Discussion in Chat**
    - We walk through a discovery thought experiment together.
-   - Ground the intuition: "What breaks when traffic scales by 100x?"
+   - Ground the intuition: "What physical constraint breaks when we scale?"
 2. **Step 2: Deep-Dive Markdown Guide (`docs/...`)**
    - Comprehensive theoretical documentation to read, learn, and keep for the future.
-   - Includes architectural diagrams (ASCII / Mermaid / Visual flowcharts), trade-off matrices, failure modes, and interview questions.
+   - **AI-Generated Architectural Visuals & Infographics**: Include high-clarity technical diagrams and AI-generated conceptual illustrations (`docs/assets/images/...`) wherever visual models reinforce intuition.
    - Grounded with external research, RFCs, and engineering blogs (Netflix, Meta, Uber, ByteByteGo, DDIA).
-3. **Step 3: Interactive Visual Lab (`interactive-simulations/...`)**
-   - HTML5/CSS3/JavaScript web simulation running 100% locally in the browser.
-   - Live packet animations, interactive sliders, node failure injection, and metrics.
+3. **Step 3: Smooth, Focused Interactive Lab (`interactive-simulations/...`)**
+   - Clean, decluttered, high-FPS web simulation running 100% locally.
+   - **Simplicity First**: Avoid UI overload. Focus on buttery-smooth packet flows, intuitive step-by-step progress, clean typography, and zero-distraction interactive visual controls.
 4. **Step 4: Checkpoint Update & Git Commit**
    - Mark the topic complete in `agent.md` and `README.md`.
    - Create a clean git commit so the repository stays up-to-date for your public GitHub.

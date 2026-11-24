@@ -3,21 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Request-Response Packet Lifecycle Simulator | System Design Lab</title>
+  <title>Request-Response Packet Lifecycle | Visual Lab</title>
   <style>
     :root {
-      --bg-dark: #0a0d16;
-      --card-bg: #121829;
-      --card-border: #222d4a;
+      --bg: #080c15;
+      --card-bg: rgba(18, 24, 38, 0.75);
+      --card-border: rgba(99, 133, 255, 0.15);
       --accent-cyan: #00f2fe;
-      --accent-blue: #3b82f6;
-      --accent-green: #10b981;
+      --accent-blue: #4facfe;
+      --accent-purple: #a855f7;
       --accent-amber: #f59e0b;
+      --accent-green: #10b981;
       --accent-red: #ef4444;
-      --accent-purple: #8b5cf6;
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
       --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
@@ -25,24 +24,27 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background-color: var(--bg-dark);
-      color: var(--text-primary);
+      background-color: var(--bg);
+      color: var(--text);
       font-family: var(--font-sans);
-      line-height: 1.5;
-      padding: 1.5rem;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 20% 10%, rgba(79, 172, 254, 0.07) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.07) 0%, transparent 40%);
     }
 
-    /* Header */
+    /* Minimalist Top Nav */
     header {
+      padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 1.25rem;
       border-bottom: 1px solid var(--card-border);
-      margin-bottom: 1.5rem;
+      background: rgba(8, 12, 21, 0.85);
+      backdrop-filter: blur(12px);
     }
 
     .brand {
@@ -53,7 +55,7 @@
       color: #fff;
     }
 
-    .brand-icon {
+    .brand-badge {
       width: 32px;
       height: 32px;
       border-radius: 8px;
@@ -63,558 +65,606 @@
       font-size: 1.1rem;
     }
 
-    .back-btn {
-      color: var(--text-secondary);
+    .back-link {
+      color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.9rem;
-      padding: 0.4rem 0.8rem;
+      font-size: 0.88rem;
+      padding: 0.4rem 0.85rem;
       border-radius: 6px;
-      background: var(--card-bg);
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--card-border);
       transition: all 0.2s;
     }
 
-    .back-btn:hover {
+    .back-link:hover {
       color: #fff;
       border-color: var(--accent-cyan);
     }
 
-    /* Main Grid */
-    .dashboard-grid {
+    /* Main Container */
+    .app-container {
+      max-width: 1100px;
+      margin: 1.5rem auto 2.5rem;
+      padding: 0 1.5rem;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* Horizontal Timeline Stepper */
+    .timeline-nav {
       display: grid;
-      grid-template-columns: 340px 1fr 340px;
-      gap: 1.5rem;
-      flex-grow: 1;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
     }
 
-    @media (max-width: 1200px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
+    @media (max-width: 768px) {
+      .timeline-nav { grid-template-columns: 1fr 1fr; }
     }
 
-    /* Panels */
-    .panel {
+    .stage-pill {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stage-pill:hover {
+      border-color: rgba(99, 133, 255, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .stage-pill.active {
+      border-color: var(--pill-accent, var(--accent-cyan));
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 4px 20px rgba(0, 242, 254, 0.15);
+    }
+
+    .stage-pill.completed {
+      border-color: var(--accent-green);
+    }
+
+    .stage-pill.completed .pill-num {
+      background: var(--accent-green);
+      color: #060b14;
+    }
+
+    .pill-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .stage-pill.active .pill-num {
+      background: var(--pill-accent, var(--accent-cyan));
+      color: #060b14;
+    }
+
+    .pill-info strong {
+      font-size: 0.88rem;
+      display: block;
+      color: #fff;
+    }
+
+    .pill-info span {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* Canvas Stage Area */
+    .canvas-card {
+      background: #060a12;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .canvas-header {
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(10, 14, 24, 0.6);
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+    }
+
+    .live-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+    }
+
+    canvas {
+      width: 100%;
+      height: 340px;
+      display: block;
+    }
+
+    /* Latency HUD overlay */
+    .hud-overlay {
+      position: absolute;
+      top: 3.5rem;
+      right: 1.25rem;
+      background: rgba(11, 16, 28, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.5rem 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      display: flex;
+      gap: 1rem;
+      pointer-events: none;
+    }
+
+    .hud-item span { color: var(--text-muted); }
+    .hud-item strong { color: var(--accent-cyan); font-weight: 700; }
+
+    /* Controls Bar */
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 0.85rem 1.25rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    button {
+      font-family: inherit;
+      padding: 0.55rem 1rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(99, 133, 255, 0.4);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      color: #060b18;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.35);
+    }
+
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    select {
+      background: #0f1627;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* Explanation Card */
+    .insight-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 12px;
       padding: 1.25rem;
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 0.6rem;
+      line-height: 1.6;
     }
 
-    .panel-title {
-      font-size: 1.05rem;
-      font-weight: 700;
+    .insight-title {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      font-weight: 700;
+      font-size: 1rem;
       color: #fff;
     }
 
-    /* Controls */
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    label {
-      font-size: 0.82rem;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    select, button, input[type="range"] {
-      font-family: inherit;
-      border-radius: 8px;
-      padding: 0.65rem 0.9rem;
-      font-size: 0.9rem;
-      border: 1px solid var(--card-border);
-      background: #1a2238;
-      color: #fff;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-      color: #060b18;
-      font-weight: 700;
-      border: none;
-    }
-
-    .btn-primary:hover {
-      filter: brightness(1.1);
-      box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .btn-group button { flex: 1; }
-
-    /* Timeline step indicator */
-    .stepper {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .step-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.6rem 0.8rem;
-      background: #161f36;
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      font-size: 0.85rem;
-      transition: all 0.25s;
-    }
-
-    .step-item.active {
-      border-color: var(--accent-cyan);
-      background: rgba(0, 242, 254, 0.08);
-      box-shadow: 0 0 10px rgba(0, 242, 254, 0.15);
-    }
-
-    .step-item.completed {
-      border-color: var(--accent-green);
-      color: var(--text-secondary);
-    }
-
-    .step-num {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #222d4a;
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      font-size: 0.75rem;
-      font-family: var(--font-mono);
-    }
-
-    .step-item.active .step-num {
-      background: var(--accent-cyan);
-      color: #050914;
-    }
-
-    .step-item.completed .step-num {
-      background: var(--accent-green);
-      color: #050914;
-    }
-
-    /* Stage Canvas */
-    .stage-container {
-      position: relative;
-      background: #080c16;
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    canvas {
-      width: 100%;
-      height: 480px;
-      display: block;
-    }
-
-    /* Metrics & Logs */
-    .metrics-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-    }
-
-    .metric-card {
-      background: #161f36;
-      border-radius: 8px;
-      padding: 0.75rem;
-      text-align: center;
-    }
-
-    .metric-val {
-      font-size: 1.4rem;
-      font-weight: 700;
-      font-family: var(--font-mono);
-      color: var(--accent-cyan);
-    }
-
-    .metric-lbl {
-      font-size: 0.72rem;
+    .insight-desc {
       color: var(--text-muted);
-      text-transform: uppercase;
-      margin-top: 0.2rem;
+      font-size: 0.92rem;
     }
 
-    .log-box {
-      background: #070a12;
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 0.6rem;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      height: 220px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
+    .packet-badge {
+      display: inline-flex;
+      align-items: center;
       gap: 0.35rem;
-    }
-
-    .log-item { display: flex; gap: 0.4rem; }
-    .log-time { color: var(--text-muted); }
-    .log-dns { color: var(--accent-purple); }
-    .log-tcp { color: var(--accent-amber); }
-    .log-tls { color: var(--accent-cyan); }
-    .log-http { color: var(--accent-green); }
-
-    .explanation-card {
-      background: rgba(59, 130, 246, 0.08);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      border-radius: 8px;
-      padding: 0.75rem;
-      font-size: 0.82rem;
-      color: #bfdbfe;
-      line-height: 1.45;
+      padding: 0.2rem 0.55rem;
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      border-radius: 4px;
+      color: var(--accent-cyan);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation -->
+  <!-- Top Nav -->
   <header>
     <a href="../index.html" class="brand">
-      <div class="brand-icon">🌐</div>
+      <div class="brand-badge">🌐</div>
       <div>
-        <h1 style="font-size: 1.1rem; font-weight: 700;">Request-Response Packet Lifecycle</h1>
-        <p style="font-size: 0.75rem; color: var(--text-muted);">Module 00: Foundations, Network Protocols & Mental Models</p>
+        <h1 style="font-size: 1rem; font-weight: 700;">Packet Lifecycle Simulator</h1>
+        <p style="font-size: 0.72rem; color: var(--text-muted);">From Keystroke to Pixels</p>
       </div>
     </a>
-    <a href="../index.html" class="back-btn">← Back to Simulation Hub</a>
+    <a href="../index.html" class="back-link">← Simulation Hub</a>
   </header>
 
-  <!-- Main Simulator Layout -->
-  <main class="dashboard-grid">
+  <!-- App Body -->
+  <main class="app-container">
 
-    <!-- Column 1: Stages & Controls -->
-    <aside class="panel">
-      <h2 class="panel-title">🕹️ Simulation Controls</h2>
+    <!-- Interactive Stepper -->
+    <nav class="timeline-nav" id="timelineNav">
+      <div class="stage-pill active" data-step="1" style="--pill-accent: var(--accent-purple);">
+        <div class="pill-num">1</div>
+        <div class="pill-info">
+          <strong>DNS Resolution</strong>
+          <span>Domain → IP Address</span>
+        </div>
+      </div>
+      <div class="stage-pill" data-step="2" style="--pill-accent: var(--accent-amber);">
+        <div class="pill-num">2</div>
+        <div class="pill-info">
+          <strong>TCP Handshake</strong>
+          <span>SYN → SYN-ACK → ACK</span>
+        </div>
+      </div>
+      <div class="stage-pill" data-step="3" style="--pill-accent: var(--accent-cyan);">
+        <div class="pill-num">3</div>
+        <div class="pill-info">
+          <strong>TLS 1.3 Key Share</strong>
+          <span>Diffie-Hellman Ephemeral</span>
+        </div>
+      </div>
+      <div class="stage-pill" data-step="4" style="--pill-accent: var(--accent-green);">
+        <div class="pill-num">4</div>
+        <div class="pill-info">
+          <strong>HTTP / 200 OK</strong>
+          <span>Encrypted Payload Stream</span>
+        </div>
+      </div>
+    </nav>
 
-      <div class="control-group">
-        <label>Network Latency Profile</label>
-        <select id="latencySelect">
-          <option value="15">Local City Data Center (15ms RTT)</option>
-          <option value="80" selected>Cross-Continent US Coast-to-Coast (80ms RTT)</option>
-          <option value="150">Trans-Atlantic (US to Europe - 150ms RTT)</option>
-          <option value="600">Geostationary Satellite / Starlink (600ms RTT)</option>
+    <!-- Canvas Visualization -->
+    <div class="canvas-card">
+      <div class="canvas-header">
+        <div class="live-badge">
+          <div class="live-pulse-dot"></div>
+          <span id="wireStatus">Ready to Dispatch</span>
+        </div>
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">
+          Target: https://api.example.com/checkout
+        </span>
+      </div>
+
+      <div class="hud-overlay">
+        <div class="hud-item"><span>Roundtrips:</span> <strong id="hudRtt">0 RTT</strong></div>
+        <div class="hud-item"><span>Wall-Clock Time:</span> <strong id="hudLatency">0 ms</strong></div>
+      </div>
+
+      <canvas id="stageCanvas"></canvas>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+      <div class="btn-group">
+        <button class="btn-primary" id="btnNextStep">▶ Next Step</button>
+        <button id="btnAutoPlay">⚡ Auto-Play</button>
+        <button id="btnReset">🔄 Reset</button>
+      </div>
+
+      <div class="toggle-group">
+        <span>Connection:</span>
+        <select id="connMode">
+          <option value="cold" selected>Cold Connection (Full Handshake)</option>
+          <option value="warm">Warm Keep-Alive (Reused Socket - 0 RTT)</option>
+        </select>
+
+        <span style="margin-left: 0.75rem;">Wire Distance:</span>
+        <select id="wireLatency">
+          <option value="15">Local City (15ms RTT)</option>
+          <option value="80" selected>US Coast-to-Coast (80ms RTT)</option>
+          <option value="150">Trans-Atlantic (150ms RTT)</option>
         </select>
       </div>
+    </div>
 
-      <div class="control-group">
-        <label>Connection State</label>
-        <select id="connectionMode">
-          <option value="cold" selected>Cold Connection (Full DNS + TCP + TLS)</option>
-          <option value="warm">Warm Connection (HTTP Keep-Alive Reuse - 0 RTT)</option>
-        </select>
+    <!-- Clear First-Principles Insight Card -->
+    <section class="insight-card" id="insightCard">
+      <div class="insight-title">
+        <span>💡</span>
+        <span id="insightHeading">Welcome to the Packet Lifecycle Simulator</span>
       </div>
-
-      <div class="btn-group" style="margin-top: 0.5rem;">
-        <button class="btn-primary" id="btnStep">▶ Step Forward</button>
-        <button id="btnAuto">⚡ Auto-Run</button>
+      <div class="insight-desc" id="insightBody">
+        Click <strong>"Next Step"</strong> or select any stage above to trace the journey of an HTTP request across undersea fiber optic cables. Notice how physical distance dictates minimum response time before your server can execute a single line of business logic!
       </div>
-
-      <button id="btnReset" style="background: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3);">
-        🧹 Reset Lifecycle
-      </button>
-
-      <hr style="border: 0; border-top: 1px solid var(--card-border);">
-
-      <div class="panel-title">🪜 Lifecycle Stages</div>
-      <div class="stepper" id="stepper">
-        <div class="step-item" id="step-dns">
-          <span class="step-num">1</span>
-          <div>
-            <strong>DNS Resolution</strong>
-            <p style="font-size: 0.72rem; color: var(--text-muted);">Domain → IP (Recursive lookup)</p>
-          </div>
-        </div>
-        <div class="step-item" id="step-tcp">
-          <span class="step-num">2</span>
-          <div>
-            <strong>TCP 3-Way Handshake</strong>
-            <p style="font-size: 0.72rem; color: var(--text-muted);">SYN → SYN-ACK → ACK (1 RTT)</p>
-          </div>
-        </div>
-        <div class="step-item" id="step-tls">
-          <span class="step-num">3</span>
-          <div>
-            <strong>TLS 1.3 Key Exchange</strong>
-            <p style="font-size: 0.72rem; color: var(--text-muted);">Diffie-Hellman Key Share (1 RTT)</p>
-          </div>
-        </div>
-        <div class="step-item" id="step-http">
-          <span class="step-num">4</span>
-          <div>
-            <strong>HTTP Request & Response</strong>
-            <p style="font-size: 0.72rem; color: var(--text-muted);">Encrypted Payload + Server DB query</p>
-          </div>
-        </div>
+      <div id="insightPills" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.35rem;">
+        <span class="packet-badge">4 Stages</span>
+        <span class="packet-badge">First-Principles Discovery</span>
       </div>
-    </aside>
-
-    <!-- Column 2: Visual Canvas Area -->
-    <section class="stage-container">
-      <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);">Packet Wire Animation</span>
-        <span style="font-size: 0.75rem; color: var(--accent-cyan); font-family: var(--font-mono);" id="currentPacketLabel">Waiting to send...</span>
-      </div>
-      <canvas id="simCanvas"></canvas>
     </section>
-
-    <!-- Column 3: Metrics & Deep Explanations -->
-    <aside class="panel">
-      <h2 class="panel-title">⏱️ Latency Accumulator</h2>
-
-      <div class="metrics-row">
-        <div class="metric-card">
-          <div class="metric-val" id="totalLatency">0ms</div>
-          <div class="metric-lbl">Total Wall-Clock Time</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-val" id="totalRtt">0</div>
-          <div class="metric-lbl">Round-Trips (RTT)</div>
-        </div>
-      </div>
-
-      <div class="explanation-card" id="explanationCard">
-        <strong>First Principles Insight:</strong>
-        <p style="margin-top: 0.35rem;">
-          Press <strong>"Step Forward"</strong> to trace the journey of an HTTP request. Notice how physical distance dictates minimum response time regardless of server CPU speed!
-        </p>
-      </div>
-
-      <div class="panel-title" style="margin-top: 0.5rem;">📜 Network Wire Trace</div>
-      <div class="log-box" id="logBox">
-        <div class="log-item">
-          <span class="log-time">[Ready]</span>
-          <span>Target URL: https://api.example.com/checkout</span>
-        </div>
-      </div>
-    </aside>
 
   </main>
 
   <script>
     // --- STATE ---
-    let currentStepIndex = 0; // 0: Idle, 1: DNS, 2: TCP, 3: TLS, 4: HTTP, 5: Done
+    let currentStep = 0; // 0: Start, 1: DNS, 2: TCP, 3: TLS, 4: HTTP
     let rttMs = 80;
-    let accumulatedLatency = 0;
+    let accumulatedMs = 0;
     let accumulatedRtts = 0;
     let autoInterval = null;
+    let packets = [];
+    let isWireEncrypted = false;
 
-    const stages = [
-      { id: "idle", name: "Idle", rtt: 0 },
-      { id: "dns", name: "DNS Resolution", rtt: 1, color: "var(--accent-purple)", desc: "Client queries Recursive DNS resolver to resolve 'api.example.com' into IP 198.51.100.42. Cost: 1 RTT." },
-      { id: "tcp", name: "TCP 3-Way Handshake", rtt: 1, color: "var(--accent-amber)", desc: "Client sends SYN (Seq=x), Server replies SYN-ACK (Seq=y, Ack=x+1), Client completes with ACK. Reliable pipe established. Cost: 1 RTT." },
-      { id: "tls", name: "TLS 1.3 Handshake", rtt: 1, color: "var(--accent-cyan)", desc: "Client sends ClientHello with Diffie-Hellman Key Share. Server replies ServerHello + Cert. AES-256-GCM symmetric encryption activated. Cost: 1 RTT." },
-      { id: "http", name: "HTTP Request & 200 OK", rtt: 1, color: "var(--accent-green)", desc: "Client sends encrypted HTTP POST /checkout. Server processes order in DB (20ms) and returns 200 OK with order JSON. Cost: 1 RTT + 20ms DB." }
+    const stageData = [
+      {
+        title: "Stage 0: Idle State",
+        body: "Client is preparing to make an HTTPS request to 'https://api.example.com/checkout'.",
+        pills: ["Awaiting user dispatch"]
+      },
+      {
+        title: "Stage 1: The Naming Problem (DNS Resolution)",
+        body: "Computers route packets by IP address (198.51.100.42), not human domain names. The client queries the recursive DNS hierarchy to discover where 'api.example.com' lives on the global internet.",
+        pills: ["Protocol: UDP", "Cost: 1 RTT (~80ms)", "Cached with TTL"]
+      },
+      {
+        title: "Stage 2: The Reliability Problem (TCP 3-Way Handshake)",
+        body: "Raw IP drops and reorders packets. TCP establishes an ordered, reliable byte stream: Client sends SYN (Seq=x), Server replies SYN-ACK (Seq=y, Ack=x+1), Client responds with ACK. No business data transmitted yet!",
+        pills: ["Protocol: TCP Layer 4", "Cost: 1 RTT (~80ms)", "Reliable Byte Stream"]
+      },
+      {
+        title: "Stage 3: The Eavesdropper Problem (TLS 1.3 Key Share)",
+        body: "To prevent wiretapping on undersea cables, Client and Server exchange Diffie-Hellman public parameters in 1 RTT. Both compute the exact same symmetric key without sending the secret across the wire. The pipe is now encrypted with AES-256-GCM!",
+        pills: ["Protocol: TLS 1.3", "Diffie-Hellman Key Exchange", "AES-256-GCM Activated"]
+      },
+      {
+        title: "Stage 4: The Semantic Problem (HTTP Request & 200 OK)",
+        body: "Now that the encrypted pipe is ready, the client streams the encrypted HTTP POST payload. The server reads the socket, executes the database checkout in 20ms, and returns HTTP 200 OK!",
+        pills: ["HTTP/1.1 or HTTP/2", "Cost: 1 RTT + 20ms DB", "Order Confirmed"]
+      }
     ];
 
-    // --- DOM REFERENCES ---
-    const canvas = document.getElementById("simCanvas");
+    // --- DOM REFS ---
+    const canvas = document.getElementById("stageCanvas");
     const ctx = canvas.getContext("2d");
-    const latencySelect = document.getElementById("latencySelect");
-    const connectionMode = document.getElementById("connectionMode");
-    const btnStep = document.getElementById("btnStep");
-    const btnAuto = document.getElementById("btnAuto");
+    const btnNext = document.getElementById("btnNextStep");
+    const btnAuto = document.getElementById("btnAutoPlay");
     const btnReset = document.getElementById("btnReset");
-    const totalLatencyEl = document.getElementById("totalLatency");
-    const totalRttEl = document.getElementById("totalRtt");
-    const currentPacketLabel = document.getElementById("currentPacketLabel");
-    const explanationCard = document.getElementById("explanationCard");
-    const logBox = document.getElementById("logBox");
+    const connMode = document.getElementById("connMode");
+    const wireLatency = document.getElementById("wireLatency");
+    const hudRtt = document.getElementById("hudRtt");
+    const hudLatency = document.getElementById("hudLatency");
+    const wireStatus = document.getElementById("wireStatus");
+    const insightHeading = document.getElementById("insightHeading");
+    const insightBody = document.getElementById("insightBody");
+    const insightPills = document.getElementById("insightPills");
+    const pills = document.querySelectorAll(".stage-pill");
 
     function resizeCanvas() {
       canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = Math.max(480, canvas.parentElement.clientHeight - 40);
+      canvas.height = 340;
     }
     window.addEventListener("resize", resizeCanvas);
     resizeCanvas();
 
-    latencySelect.addEventListener("change", (e) => {
+    wireLatency.addEventListener("change", (e) => {
       rttMs = parseInt(e.target.value);
     });
 
-    // --- ANIMATED PACKETS ---
-    let activePackets = [];
-
-    function addPacket(fromClient, label, color, onFinish) {
-      const clientX = 80;
+    // --- ANIMATION PARTICLES ---
+    function spawnPacket(fromClient, label, color, durationMs, onDone) {
+      const clientX = 120;
       const clientY = canvas.height / 2;
-      const serverX = canvas.width - 80;
+      const serverX = canvas.width - 120;
       const serverY = canvas.height / 2;
 
-      activePackets.push({
-        x: fromClient ? clientX : serverX,
-        y: clientY,
+      packets.push({
         startX: fromClient ? clientX : serverX,
         endX: fromClient ? serverX : clientX,
+        y: clientY,
         progress: 0,
-        speed: 0.03,
+        speed: 1 / (durationMs / 16.6),
         label,
         color,
-        onFinish
+        onDone
       });
     }
 
-    function log(category, msg) {
-      const item = document.createElement("div");
-      item.className = "log-item";
-      let catClass = "log-http";
-      if (category === "DNS") catClass = "log-dns";
-      if (category === "TCP") catClass = "log-tcp";
-      if (category === "TLS") catClass = "log-tls";
-
-      item.innerHTML = `<span class="log-time">[+${accumulatedLatency}ms]</span> <strong class="${catClass}">${category}:</strong> <span>${msg}</span>`;
-      logBox.appendChild(item);
-      logBox.scrollTop = logBox.scrollHeight;
-    }
-
-    function updateStepperUI() {
-      document.querySelectorAll(".step-item").forEach((el, idx) => {
-        el.classList.remove("active", "completed");
-        if (idx + 1 < currentStepIndex) el.classList.add("completed");
-        if (idx + 1 === currentStepIndex) el.classList.add("active");
+    function updateUI() {
+      pills.forEach((p, idx) => {
+        p.classList.remove("active", "completed");
+        if (idx + 1 === currentStep) p.classList.add("active");
+        if (idx + 1 < currentStep) p.classList.add("completed");
       });
+
+      const cur = stageData[currentStep] || stageData[0];
+      insightHeading.innerText = cur.title;
+      insightBody.innerText = cur.body;
+      insightPills.innerHTML = cur.pills.map(p => `<span class="packet-badge">${p}</span>`).join("");
+
+      hudRtt.innerText = `${accumulatedRtts} RTT`;
+      hudLatency.innerText = `${accumulatedMs} ms`;
     }
 
     // --- STEP FORWARD ENGINE ---
-    function stepForward() {
-      if (currentStepIndex >= 4) {
+    function advanceStep() {
+      if (currentStep >= 4) {
         if (autoInterval) clearInterval(autoInterval);
-        btnAuto.innerText = "⚡ Auto-Run";
+        btnAuto.innerText = "⚡ Auto-Play";
         return;
       }
 
-      currentStepIndex++;
-      updateStepperUI();
+      currentStep++;
+      updateUI();
 
-      if (currentStepIndex === 1) {
+      if (currentStep === 1) {
         // DNS
-        if (connectionMode.value === "warm") {
-          log("DNS", "Cached locally in socket pool! 0ms overhead.");
-          stepForward();
+        if (connMode.value === "warm") {
+          wireStatus.innerText = "DNS: Cached in Socket Pool (0ms)";
+          advanceStep();
           return;
         }
 
-        currentPacketLabel.innerText = "Querying DNS Resolver: api.example.com...";
-        explanationCard.innerHTML = `<strong>Stage 1: DNS Lookup:</strong><br>${stages[1].desc}`;
-        addPacket(true, "DNS Query: api.example.com", "#8b5cf6", () => {
-          addPacket(false, "DNS Response: 198.51.100.42", "#8b5cf6", () => {
+        wireStatus.innerText = "Resolving DNS: api.example.com...";
+        spawnPacket(true, "DNS Query: api.example.com", "#a855f7", 600, () => {
+          spawnPacket(false, "DNS Response: 198.51.100.42", "#a855f7", 600, () => {
             accumulatedRtts += 1;
-            accumulatedLatency += rttMs;
-            totalLatencyEl.innerText = `${accumulatedLatency}ms`;
-            totalRttEl.innerText = accumulatedRtts;
-            log("DNS", "Resolved api.example.com -> 198.51.100.42 (TTL 300s)");
-            currentPacketLabel.innerText = "DNS complete. Ready for TCP handshake.";
+            accumulatedMs += rttMs;
+            updateUI();
+            wireStatus.innerText = "DNS Resolved: 198.51.100.42 (1 RTT)";
           });
         });
       }
 
-      else if (currentStepIndex === 2) {
+      else if (currentStep === 2) {
         // TCP
-        if (connectionMode.value === "warm") {
-          log("TCP", "Warm TCP socket connection reused! 0ms overhead.");
-          stepForward();
+        if (connMode.value === "warm") {
+          wireStatus.innerText = "TCP: Reusing Established Socket (0 RTT)";
+          advanceStep();
           return;
         }
 
-        currentPacketLabel.innerText = "TCP 3-Way Handshake in progress...";
-        explanationCard.innerHTML = `<strong>Stage 2: TCP Handshake:</strong><br>${stages[2].desc}`;
-        addPacket(true, "SYN (Seq=1000)", "#f59e0b", () => {
-          addPacket(false, "SYN-ACK (Seq=5000, Ack=1001)", "#f59e0b", () => {
-            addPacket(true, "ACK (Ack=5001)", "#f59e0b", () => {
+        wireStatus.innerText = "TCP 3-Way Handshake...";
+        spawnPacket(true, "SYN (Seq=1000)", "#f59e0b", 450, () => {
+          spawnPacket(false, "SYN-ACK (Ack=1001)", "#f59e0b", 450, () => {
+            spawnPacket(true, "ACK (Seq=1001)", "#f59e0b", 450, () => {
               accumulatedRtts += 1;
-              accumulatedLatency += rttMs;
-              totalLatencyEl.innerText = `${accumulatedLatency}ms`;
-              totalRttEl.innerText = accumulatedRtts;
-              log("TCP", "3-Way Handshake complete. TCP socket established.");
-              currentPacketLabel.innerText = "TCP established. Ready for TLS 1.3.";
+              accumulatedMs += rttMs;
+              updateUI();
+              wireStatus.innerText = "TCP Pipe Established (1 RTT)";
             });
           });
         });
       }
 
-      else if (currentStepIndex === 3) {
+      else if (currentStep === 3) {
         // TLS 1.3
-        if (connectionMode.value === "warm") {
-          log("TLS", "Warm TLS session reused! 0ms overhead.");
-          stepForward();
+        if (connMode.value === "warm") {
+          wireStatus.innerText = "TLS: Reusing Warm TLS Session (0 RTT)";
+          advanceStep();
           return;
         }
 
-        currentPacketLabel.innerText = "TLS 1.3 Handshake (Diffie-Hellman Key Share)...";
-        explanationCard.innerHTML = `<strong>Stage 3: TLS 1.3 Handshake:</strong><br>${stages[3].desc}`;
-        addPacket(true, "ClientHello + Key Share", "#00f2fe", () => {
-          addPacket(false, "ServerHello + Cert + Finished", "#00f2fe", () => {
+        wireStatus.innerText = "TLS 1.3 Key Exchange...";
+        spawnPacket(true, "ClientHello + Key Share", "#00f2fe", 600, () => {
+          spawnPacket(false, "ServerHello + Cert + Finished", "#00f2fe", 600, () => {
             accumulatedRtts += 1;
-            accumulatedLatency += rttMs;
-            totalLatencyEl.innerText = `${accumulatedLatency}ms`;
-            totalRttEl.innerText = accumulatedRtts;
-            log("TLS", "Encrypted session ready. AES-256-GCM symmetric cipher key generated.");
-            currentPacketLabel.innerText = "TLS 1.3 secured. Ready for HTTP Request.";
+            accumulatedMs += rttMs;
+            isWireEncrypted = true;
+            updateUI();
+            wireStatus.innerText = "🔒 Secure AES-256-GCM Pipe Active!";
           });
         });
       }
 
-      else if (currentStepIndex === 4) {
+      else if (currentStep === 4) {
         // HTTP Request
-        currentPacketLabel.innerText = "Sending HTTP POST /checkout...";
-        explanationCard.innerHTML = `<strong>Stage 4: HTTP Request & Response:</strong><br>${stages[4].desc}`;
-        addPacket(true, "POST /v1/checkout (Encrypted)", "#10b981", () => {
+        wireStatus.innerText = "Streaming Encrypted HTTP Request...";
+        spawnPacket(true, "POST /v1/checkout (Encrypted)", "#10b981", 600, () => {
+          wireStatus.innerText = "Server Processing Database Query (20ms)...";
           setTimeout(() => {
-            addPacket(false, "HTTP 200 OK (orderId: ORD-9481)", "#10b981", () => {
+            spawnPacket(false, "HTTP/1.1 200 OK (Confirmed)", "#10b981", 600, () => {
               accumulatedRtts += 1;
-              accumulatedLatency += (rttMs + 20); // 20ms server DB processing
-              totalLatencyEl.innerText = `${accumulatedLatency}ms`;
-              totalRttEl.innerText = accumulatedRtts;
-              log("HTTP", "200 OK received! Order successfully placed.");
-              currentPacketLabel.innerText = `Request Complete! Total Time: ${accumulatedLatency}ms`;
-              explanationCard.innerHTML = `
-                <strong style="color: var(--accent-green);">🎉 Request-Response Lifecycle Complete!</strong>
-                <p style="margin-top: 0.35rem;">
-                  Notice how ${accumulatedLatency - 20}ms was spent on network transport, and only 20ms was actual server computation! This proves why System Architects prioritize CDN edge termination and Connection Pooling!
-                </p>
+              accumulatedMs += (rttMs + 20);
+              updateUI();
+              wireStatus.innerText = "🎉 Request Complete! (200 OK)";
+              insightHeading.innerHTML = "🎉 Lifecycle Complete: First-Principles Takeaway";
+              insightBody.innerHTML = `
+                Notice that out of <strong>${accumulatedMs}ms</strong> total request time, 
+                <strong>${accumulatedMs - 20}ms</strong> was spent purely waiting on speed-of-light networking handshakes! 
+                This is why system designers prioritize <strong>CDNs</strong>, <strong>HTTP Keep-Alive</strong>, and <strong>HTTP/3 QUIC</strong>!
               `;
             });
-          }, 300); // 300ms visual pause representing DB work
+          }, 350);
         });
       }
     }
 
-    btnStep.addEventListener("click", () => stepForward());
+    btnNext.addEventListener("click", () => advanceStep());
 
     btnAuto.addEventListener("click", () => {
       if (autoInterval) {
         clearInterval(autoInterval);
         autoInterval = null;
-        btnAuto.innerText = "⚡ Auto-Run";
+        btnAuto.innerText = "⚡ Auto-Play";
       } else {
-        btnAuto.innerText = "⏹ Stop Auto-Run";
-        stepForward();
+        btnAuto.innerText = "⏹ Pause";
+        advanceStep();
         autoInterval = setInterval(() => {
-          if (currentStepIndex >= 4) {
+          if (currentStep >= 4) {
             clearInterval(autoInterval);
             autoInterval = null;
-            btnAuto.innerText = "⚡ Auto-Run";
+            btnAuto.innerText = "⚡ Auto-Play";
           } else {
-            stepForward();
+            advanceStep();
           }
         }, 1600);
       }
@@ -623,43 +673,75 @@
     btnReset.addEventListener("click", () => {
       if (autoInterval) clearInterval(autoInterval);
       autoInterval = null;
-      btnAuto.innerText = "⚡ Auto-Run";
-      currentStepIndex = 0;
-      accumulatedLatency = 0;
+      btnAuto.innerText = "⚡ Auto-Play";
+      currentStep = 0;
+      accumulatedMs = 0;
       accumulatedRtts = 0;
-      activePackets = [];
-      totalLatencyEl.innerText = "0ms";
-      totalRttEl.innerText = "0";
-      currentPacketLabel.innerText = "Waiting to send...";
-      logBox.innerHTML = '<div class="log-item"><span class="log-time">[Ready]</span><span>Target URL: https://api.example.com/checkout</span></div>';
-      explanationCard.innerHTML = '<strong>First Principles Insight:</strong><p style="margin-top: 0.35rem;">Press <strong>"Step Forward"</strong> to trace the journey of an HTTP request.</p>';
-      updateStepperUI();
+      isWireEncrypted = false;
+      packets = [];
+      wireStatus.innerText = "Ready to Dispatch";
+      updateUI();
+    });
+
+    // Allow clicking on any timeline stage directly
+    pills.forEach((p, idx) => {
+      p.addEventListener("click", () => {
+        currentStep = idx;
+        advanceStep();
+      });
     });
 
     // --- DRAW LOOP ---
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const clientX = 80;
+      const clientX = 120;
       const clientY = canvas.height / 2;
-      const serverX = canvas.width - 80;
+      const serverX = canvas.width - 120;
       const serverY = canvas.height / 2;
 
-      // Draw wire
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-      ctx.lineWidth = 3;
+      // Draw Undersea Cable / Fiber Wire
+      ctx.save();
       ctx.beginPath();
       ctx.moveTo(clientX, clientY);
       ctx.lineTo(serverX, serverY);
+      if (isWireEncrypted) {
+        ctx.strokeStyle = "rgba(0, 242, 254, 0.4)";
+        ctx.shadowColor = "#00f2fe";
+        ctx.shadowBlur = 12;
+      } else {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+        ctx.shadowBlur = 0;
+      }
+      ctx.lineWidth = 4;
       ctx.stroke();
+      ctx.restore();
 
-      // Draw Client Node
+      // Middle Lock indicator if encrypted
+      if (isWireEncrypted) {
+        const midX = (clientX + serverX) / 2;
+        ctx.save();
+        ctx.fillStyle = "#0c1424";
+        ctx.strokeStyle = "#00f2fe";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(midX, clientY, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#00f2fe";
+        ctx.font = "14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("🔒", midX, clientY + 5);
+        ctx.restore();
+      }
+
+      // Draw Client (Browser) Node
       ctx.save();
-      ctx.fillStyle = "#1e293b";
+      ctx.fillStyle = "#111827";
       ctx.strokeStyle = "#3b82f6";
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(clientX, clientY, 36, 0, Math.PI * 2);
+      ctx.arc(clientX, clientY, 34, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
       ctx.restore();
@@ -667,18 +749,18 @@
       ctx.fillStyle = "#fff";
       ctx.font = "bold 12px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("BROWSER", clientX, clientY - 4);
+      ctx.fillText("💻 BROWSER", clientX, clientY - 4);
       ctx.font = "10px monospace";
       ctx.fillStyle = "#94a3b8";
       ctx.fillText("Client (SF)", clientX, clientY + 12);
 
-      // Draw Server Node
+      // Draw Server (Frankfurt) Node
       ctx.save();
-      ctx.fillStyle = "#1e293b";
-      ctx.strokeStyle = "#10b981";
+      ctx.fillStyle = "#111827";
+      ctx.strokeStyle = isWireEncrypted ? "#10b981" : "#4b5563";
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(serverX, serverY, 36, 0, Math.PI * 2);
+      ctx.arc(serverX, serverY, 34, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
       ctx.restore();
@@ -686,36 +768,48 @@
       ctx.fillStyle = "#fff";
       ctx.font = "bold 12px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("API SERVER", serverX, serverY - 4);
+      ctx.fillText("🏢 SERVER", serverX, serverY - 4);
       ctx.font = "10px monospace";
-      ctx.fillStyle = "#10b981";
+      ctx.fillStyle = isWireEncrypted ? "#10b981" : "#94a3b8";
       ctx.fillText("Frankfurt (DE)", serverX, serverY + 12);
 
-      // Draw and Update Active Packets
-      for (let i = activePackets.length - 1; i >= 0; i--) {
-        const p = activePackets[i];
+      // Draw Packets
+      for (let i = packets.length - 1; i >= 0; i--) {
+        const p = packets[i];
         p.progress += p.speed;
-        p.x = p.startX + (p.endX - p.startX) * p.progress;
 
-        // Packet Dot
+        // Smooth cubic easing
+        const t = Math.min(1, p.progress);
+        const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        const curX = p.startX + (p.endX - p.startX) * ease;
+
+        // Packet Glowing Orb
         ctx.save();
         ctx.fillStyle = p.color;
         ctx.shadowColor = p.color;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 16;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+        ctx.arc(curX, p.y, 8, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
-        // Packet Label
-        ctx.fillStyle = p.color;
+        // Packet Text Label with pill background
+        ctx.save();
         ctx.font = "bold 11px monospace";
+        const textWidth = ctx.measureText(p.label).width;
+        ctx.fillStyle = "rgba(8, 12, 21, 0.85)";
+        ctx.fillRect(curX - textWidth / 2 - 6, p.y - 28, textWidth + 12, 18);
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(curX - textWidth / 2 - 6, p.y - 28, textWidth + 12, 18);
+        ctx.fillStyle = p.color;
         ctx.textAlign = "center";
-        ctx.fillText(p.label, p.x, p.y - 14);
+        ctx.fillText(p.label, curX, p.y - 15);
+        ctx.restore();
 
         if (p.progress >= 1) {
-          const cb = p.onFinish;
-          activePackets.splice(i, 1);
+          const cb = p.onDone;
+          packets.splice(i, 1);
           if (cb) cb();
         }
       }
@@ -723,6 +817,7 @@
       requestAnimationFrame(draw);
     }
 
+    updateUI();
     draw();
   </script>
 </body>
