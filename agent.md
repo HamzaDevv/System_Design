@@ -41,8 +41,8 @@ For every single topic in our roadmap, we execute this sequence inside a **unifi
    - Mark the topic complete in `agent.md`, the module's `README.md`, and root `README.md`, and register the lab in root `index.html`.
    - Create a clean git commit and push to keep the public GitHub repository synchronized.
 
-### 3. Syllabus Lock Rule (`LOCKED — FINAL v1.0`)
-- The **Master Curriculum** below (Modules `00` through `10`) is **fixed and final**.
+### 3. Syllabus Lock Rule (`LOCKED — FINAL v1.1`)
+- The **Master Curriculum** below (Modules `00` through `10`: 58 core topics, 17 case studies, 11 interactive labs) is **verified complete and locked**.
 - Do **not** add, remove, split, merge, or reorder modules or topics unless the user explicitly instructs to amend the lock.
 - Progress only updates checkboxes (`[ ]` → `[x]`), co-located file links, and the **Current State & Checkpoint** table.
 
@@ -117,37 +117,39 @@ Every simulation `index.html` must include these 5 clean vertical bands:
 
 | Field | Value |
 |---|---|
-| **Syllabus Status** | `LOCKED — Final v1.0 (11 Modules • 56 Core Topics • 15 Case Studies • 10 Interactive Labs)` |
+| **Syllabus Status** | `LOCKED — Final v1.1 (11 Modules • 58 Core Topics • 17 Case Studies • 11 Interactive Labs)` |
 | **Repo Architecture** | `Unified Co-Located Tree (<module>/<topic>/README.md + assets/ + simulation.html)` |
 | **Current Module** | `Module 00: Foundations, Networking & Mental Models` |
 | **Current Topic** | `00.2 Protocol Evolution: HTTP/1.1 vs HTTP/2 Multiplexing vs HTTP/3 (QUIC)` |
-| **Stage** | `Completed (Refactored Unified Work Tree + Origin History + Revision To-Do + Simulation)` |
-| **Next Topic** | `00.3 Communication Paradigms (REST vs gRPC & Protobuf vs GraphQL)` |
-| **Last Checkpoint Commit** | `679d695` (*refactor(structure): unify work tree by module/topic with co-located labs, origin histories, and revision checklists*) |
+| **Stage** | `Completed + Full Syllabus Completeness Audit v1.1 Synced` |
+| **Next Topic** | `00.3 Communication Paradigms (REST vs gRPC & Protobuf vs GraphQL, Webhooks, Pagination & Versioning)` |
+| **Last Checkpoint Commit** | `df29d38` (*docs(checkpoint): record refactor commit hash in agent.md*) |
 
 ---
 
-## 🗺️ Master Curriculum Checkpoint Tracker (`FINAL v1.0 — LOCKED`)
+## 🗺️ Master Curriculum Checkpoint Tracker (`FINAL v1.1 — LOCKED`)
 
 ### [Module 00: Foundations, Networking & Mental Models](00-foundations/)
-- [x] **00.1 The Request-Response Lifecycle** (DNS → TCP 3-Way Handshake → TLS 1.3 → HTTP request/response)
+- [x] **00.1 The Request-Response Lifecycle** (DNS → TCP/UDP & IPv4/IPv6 → OSI Model → TLS 1.3 → HTTP request/response)
   - *Theory Notes*: [`00-foundations/01-request-response-lifecycle/README.md`](00-foundations/01-request-response-lifecycle/README.md)
   - *Interactive Lab*: [`00-foundations/01-request-response-lifecycle/simulation.html`](00-foundations/01-request-response-lifecycle/simulation.html)
 - [x] **00.2 Protocol Evolution** (HTTP/1.1 Head-of-Line Blocking vs HTTP/2 Multiplexing vs HTTP/3 QUIC over UDP)
   - *Theory Notes*: [`00-foundations/02-protocol-evolution/README.md`](00-foundations/02-protocol-evolution/README.md)
   - *Interactive Lab*: [`00-foundations/02-protocol-evolution/simulation.html`](00-foundations/02-protocol-evolution/simulation.html)
-- [ ] **00.3 Communication Paradigms** (REST vs gRPC & Protobuf vs GraphQL, Pagination & API Versioning)
+- [ ] **00.3 Communication Paradigms** (REST vs gRPC & Protobuf vs GraphQL, Webhooks & Async APIs `202`, Pagination & API Versioning)
 - [ ] **00.4 Duplex & Real-Time Transport** (WebSockets vs Server-Sent Events vs Long Polling vs WebRTC)
-- [ ] **00.5 Physical Latency, Throughput & Capacity Estimation** (Numbers every engineer must know, Little's Law, QPS/Storage/Bandwidth math)
+- [ ] **00.5 Physical Latency, Throughput, Availability & Capacity Estimation** (Latency numbers, Little's Law, QPS/Storage/Bandwidth, Availability Nines Series vs Parallel & Cloud FinOps)
 - [ ] **00.6 Serialization, Compression & Checksums** (JSON, Protobuf, Avro, Thrift, gzip/zstd, Schema Evolution)
 
-### [Module 01: Scalability, Proxies & Load Balancing](01-scalability-load-balancing/)
-- [ ] **01.1 Horizontal vs Vertical Scaling, Statelessness & Session Management**
+### [Module 01: Scalability, Proxies, Compute & Load Balancing](01-scalability-load-balancing/)
+- [ ] **01.1 Horizontal vs Vertical Scaling, Statelessness & Session Management** (Scale Cube X/Y/Z, Sticky vs Externalized Sessions)
 - [ ] **01.2 Forward Proxies, Reverse Proxies, API Gateways & BFF Pattern**
-- [ ] **01.3 L4 (Transport / DSR) vs L7 (Application) Load Balancing & TLS Termination**
+- [ ] **01.3 L4 (Transport / DSR) vs L7 (Application) Load Balancing, TLS Termination & GeoDNS/GSLB**
 - [ ] **01.4 Load Balancing Algorithms** (Round Robin, Weighted, Least Connections, Power of Two Choices, IP Hash)
 - [ ] **01.5 Consistent Hashing Deep Dive** (Hash Ring, Virtual Nodes, Bounded Loads, Rebalancing)
 - [ ] **01.6 Service Discovery, Health Checks & Client-Side vs Server-Side Load Balancing**
+- [ ] **01.7 Service Architecture Styles & Service Mesh** (Monolith vs Modular Monolith vs Microservices vs Serverless/FaaS, Conway's Law, Envoy Sidecar / Control vs Data Plane)
+- [ ] **01.8 Compute Primitives, C10K I/O & Orchestration** (VMs vs Containers vs Firecracker MicroVMs, `epoll`/`kqueue` Event Loops vs Thread Pools, Kubernetes HPA & Graceful Shutdown)
 - [x] *Interactive Lab: Load Balancer & Traffic Simulator* (`01-scalability-load-balancing/04-load-balancing-algorithms/simulation.html`)
 
 ### [Module 02: Caching Architectures & Edge Delivery](02-caching-and-cdn/)
@@ -159,14 +161,14 @@ Every simulation `index.html` must include these 5 clean vertical bands:
 - [ ] *Interactive Lab: Cache Eviction & Stampede Playground* (`02-caching-and-cdn/02-cache-eviction-playground/simulation.html`)
 
 ### [Module 03: Storage Systems, Databases & Indexing](03-database-storage-systems/)
-- [ ] **03.1 SQL vs NoSQL Data Models** (Relational, Key-Value, Document, Wide-Column, Graph, Time-Series)
-- [ ] **03.2 Transactions, Isolation Levels & MVCC** (Read Committed, Snapshot Isolation, Serializable, Pessimistic vs Optimistic Locking)
+- [ ] **03.1 SQL vs NoSQL Data Models & Schema Design** (Relational, Key-Value, Document, Wide-Column, Graph, Time-Series; Normalization vs Denormalization, Joins at Scale, Materialized Views)
+- [ ] **03.2 Transactions, Isolation Levels, MVCC & Linearizability** (Read Committed, Snapshot Isolation, Serializable vs Linearizability, Pessimistic vs Optimistic Locking)
 - [ ] **03.3 ACID vs BASE & Distributed Trade-offs** (CAP Theorem & PACELC Framework)
-- [ ] **03.4 Replication Topologies & Lag Anomalies** (Single-Leader, Multi-Leader, Leaderless Quorums $W+R>N$, Sloppy Quorums, Read-Your-Writes)
-- [ ] **03.5 Partitioning & Sharding Strategies** (Range, Hash, Directory, Rebalancing, Celebrity Hotspots, Local vs Global Secondary Indexes)
-- [ ] **03.6 Storage Engine Internals** (B+Trees vs LSM-Trees, WAL, MemTables, SSTables, Compaction, Bloom Filters, Connection Pooling)
+- [ ] **03.4 Replication Topologies, Lag Anomalies & Conflict Resolution** (Single-Leader, Multi-Leader, Leaderless Quorums $W+R>N$, Sloppy Quorums, Read-Your-Writes, LWW, Vector Clocks, CRDTs)
+- [ ] **03.5 Partitioning, Sharding & Federation Strategies** (Range, Hash, Directory, Database Federation, Rebalancing, Celebrity Hotspots, Local vs Global Secondary Indexes)
+- [ ] **03.6 Storage Engine Internals & Indexing** (B+Trees vs LSM-Trees, WAL, MemTables, SSTables, Compaction, Bloom Filters, Composite/Covering/Hash/Spatial Indexes, Connection Pooling)
 - [ ] **03.7 Distributed Transactions** (Two-Phase Commit, Transactional Outbox Pattern, Saga Choreography vs Orchestration)
-- [ ] **03.8 Blob/Object Storage, Distributed File Systems & Columnar OLAP** (S3, Chunking & Erasure Coding, Parquet, ClickHouse)
+- [ ] **03.8 Storage Tiers (Block/File/Object) & Columnar OLAP** (SAN/EBS/RAID vs NAS/NFS/HDFS vs S3, Pre-Signed URLs & Multipart Uploads, Erasure Coding, Parquet, Iceberg Lakehouse, ClickHouse)
 - [ ] *Interactive Lab: B+Tree vs LSM-Tree & Replication Quorum Visualizer* (`03-database-storage-systems/06-storage-engine-internals/simulation.html`)
 
 ### [Module 04: Asynchronous Processing, Queues & Event Streams](04-asynchronous-messaging/)
@@ -198,8 +200,8 @@ Every simulation `index.html` must include these 5 clean vertical bands:
 ### [Module 07: Search, Real-Time, Geospatial & Data Pipelines](07-search-realtime-geospatial/)
 - [ ] **07.1 Full-Text Search & Inverted Indexes** (Tokenization, BM25, Scatter-Gather in Elasticsearch, Prefix Tries)
 - [ ] **07.2 Real-Time Connections at Scale** (1M+ Concurrent WebSockets, Fan-Out Gateways, Heartbeats & Presence Systems)
-- [ ] **07.3 Geospatial Indexing & Proximity Search** (Geohash, Quadtree, R-Tree, Google S2 / Uber H3)
-- [ ] **07.4 Batch vs Stream Processing & Windowing** (Lambda vs Kappa Architecture, Tumbling/Sliding/Session Windows, Watermarks & Late Data)
+- [ ] **07.3 Geospatial Indexing & Proximity Search** (Geohash, Quadtree, R-Tree, Google S2 / Uber H3, Proximity Services & Maps Routing)
+- [ ] **07.4 Batch vs Stream Processing, ETL/ELT & Windowing** (Lambda vs Kappa Architecture, MapReduce/Spark Shuffle, Tumbling/Sliding/Session Windows, Watermarks, Late Data & Top-K Heavy Hitters)
 - [ ] *Interactive Lab: Geohash, Quadtree & Inverted Index Visualizer* (`07-search-realtime-geospatial/03-geospatial-indexing/simulation.html`)
 
 ### [Module 08: Security, Observability & Production Engineering](08-security-observability-production/)
@@ -207,7 +209,7 @@ Every simulation `index.html` must include these 5 clean vertical bands:
 - [ ] **08.2 Network & Data Security** (mTLS, Zero Trust, Envelope Encryption, KMS, WAF & L3/L4/L7 DDoS Mitigation)
 - [ ] **08.3 The Three Pillars of Observability** (Structured Logging, Metrics/Histograms & Tail Latency p95/p99, Distributed Tracing & OpenTelemetry)
 - [ ] **08.4 Reliability Targets: SLIs, SLOs, SLAs & Error Budgets**
-- [ ] **08.5 Zero-Downtime Deployments & Migrations** (Blue-Green, Canary, Shadow Traffic, Feature Flags, Expand-Contract DB Migrations)
+- [ ] **08.5 Zero-Downtime Deployments, Migrations & Production API Testing** (Blue-Green, Canary, Shadow Traffic, Feature Flags, Expand-Contract DB Migrations & 9 Types of API Testing: Smoke, Contract, Load, Stress, Fuzz)
 - [ ] *Interactive Lab: Distributed Trace Waterfall & p99 Tail-Latency Explorer* (`08-security-observability-production/03-observability-pillars/simulation.html`)
 
 ### [Module 09: Modern AI & ML Infrastructure System Design](09-ai-ml-systems/)
@@ -215,6 +217,7 @@ Every simulation `index.html` must include these 5 clean vertical bands:
 - [ ] **09.2 LLM Serving & Inference Systems** (Prefill vs Decode, KV Cache, PagedAttention, Continuous Batching, Speculative Decoding)
 - [ ] **09.3 AI Gateways, Routing & Guardrails** (Multi-Model Routing, Semantic Caching, Token Rate Limiting, Async Evals)
 - [ ] **09.4 Recommendation & Ranking Pipelines** (Candidate Generation, Feature Stores, Two-Tower Models, Real-Time Re-Ranking)
+- [ ] **09.5 Distributed ML Training & Agentic AI Systems** (Data/Tensor/Pipeline Parallelism, Stateful Agent Execution Loops, Tool/MCP Sandboxing, Checkpointing & Online Eval Loops)
 - [ ] *Interactive Lab: Hybrid Retrieval & LLM Continuous Batching Visualizer* (`09-ai-ml-systems/02-llm-serving-inference/simulation.html`)
 
 ### [Module 10: End-to-End System Design Case Studies](10-case-studies/)
@@ -227,12 +230,14 @@ Every simulation `index.html` must include these 5 clean vertical bands:
 - [ ] **10.7 Cloud File Storage & Sync** (Dropbox / Google Drive — Block Chunking, Content-Addressed Dedup, Delta Sync)
 - [ ] **10.8 Video Streaming Platform** (YouTube / Netflix — Transcoding DAG, Adaptive Bitrate HLS/DASH, ISP Open Connect CDN)
 - [ ] **10.9 Flash Sale & Ticket Booking Engine** (Ticketmaster / BookMyShow — Seat Hold TTL, Optimistic/Distributed Locks, Virtual Waiting Room)
-- [ ] **10.10 Ride-Sharing Dispatch System** (Uber / Ola — Geospatial Index, Driver Location Stream, Matching & ETA)
+- [ ] **10.10 Ride-Sharing & Proximity Dispatch System** (Uber / Ola / Yelp — Geospatial Index, Driver Location Stream, Matching & ETA)
 - [ ] **10.11 Payment Gateway, Wallet & Double-Entry Ledger** (Stripe / UPI — Strict Idempotency, Exactly-Once Ledger, Async Reconciliation)
 - [ ] **10.12 Real-Time Collaborative Document Editor** (Google Docs — Operational Transformation vs CRDTs)
 - [ ] **10.13 Distributed Metrics & Log Monitoring System** (Datadog / Prometheus — High-Write Time-Series Ingestion, Downsampling & Alerting)
-- [ ] **10.14 Ad Click Aggregator & Real-Time Gaming Leaderboard** (Stream Windowing, Reconciliation, Redis Sorted Sets)
+- [ ] **10.14 Ad Click Aggregator, Top-K Heavy Hitters & Gaming Leaderboard** (Stream Windowing, Count-Min Sketch, Reconciliation, Redis Sorted Sets)
 - [ ] **10.15 Production Enterprise RAG & AI Copilot Platform** (Hybrid Search, Multi-Tenant ACLs, Streaming Tokens & Observability)
+- [ ] **10.16 Distributed Key-Value Store** (Amazon Dynamo / Cassandra — Consistent Hashing, Sloppy Quorums, Hinted Handoff, Merkle Trees, LSM)
+- [ ] **10.17 Distributed Job & Workflow Scheduler** (Cron / Temporal / Airflow — Partitioned Time Buckets, Idempotent Workers, Leases, DLQ & DAG State)
 
 ---
 

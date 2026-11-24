@@ -82,3 +82,33 @@ High Availability (HA) guarantees are expressed in "nines".
 | **99.99% (Four 9s)** | 52.6 minutes | 4.38 minutes | 8.64 seconds | Multi-AZ, automated health check failover |
 | **99.999% (Five 9s)** | 5.26 minutes | 26.3 seconds | 0.86 seconds | Multi-Region active-active, zero single point of failure |
 | **99.9999% (Six 9s)** | 31.5 seconds | 2.63 seconds | 0.086 seconds | Telco / Core Banking level engineering |
+
+### Series vs. Parallel Availability Math
+- **Components in Series** (all must succeed — e.g., API Gateway $\rightarrow$ App $\rightarrow$ Primary DB):
+  $$A_{\text{total}} = A_1 \times A_2 \times \dots \times A_n$$
+  *(Example: Two $99.9\%$ services in series drop total availability to $0.999 \times 0.999 \approx \mathbf{99.8\%}$!)*
+- **Components in Parallel** (failover redundancy — succeeds if *at least one* survives):
+  $$A_{\text{total}} = 1 - (1 - A_1)(1 - A_2)\dots(1 - A_n)$$
+  *(Example: Two $99.9\%$ active-active instances yield $1 - (0.001)^2 = \mathbf{99.9999\%}$!)*
+- **Availability vs. Reliability vs. Durability**:
+  - **Availability**: Is the system responding to requests *right now*? (Measured in Nines of uptime).
+  - **Reliability**: Is it returning *correct* results without silent corruption over time?
+  - **Durability**: Are committed bytes preserved without permanent loss? (e.g., S3 promises `99.999999999%` — **11 nines** of durability via multi-AZ erasure coding, even when availability is `99.99%`).
+
+---
+
+## ⚙️ Concurrency, Tail Latency & Cloud FinOps Rules
+
+### 5. Little's Law (Concurrency & Queue Sizing)
+$$L = \lambda \times W$$
+Where $L$ = average concurrent in-flight requests, $\lambda$ = arrival rate (QPS), $W$ = average latency per request (seconds).
+*(Example: $10{,}000\text{ QPS}$ with $50\text{ ms}$ ($0.05\text{ s}$) latency requires **$500$ concurrent open connections/threads**! If downstream DB stalls to $2\text{ s}$, concurrency jumps $40\times$ to $20{,}000$ and exhausts connection pools.)*
+
+### 6. Tail-Latency Amplification (Fan-Out)
+If a single user request fans out to $N$ parallel leaf microservices and each has a $1\%$ slow tail ($p_{99}$):
+$$P(\text{user experiences slow response}) = 1 - (0.99)^N$$
+*(At $N = 100$ leaf calls, **$63.4\%$ of all user requests hit a tail spike!** That is why Google recommends **hedged requests**.)*
+
+### 7. Cloud Economics & Transfer Costs (Back-of-the-Envelope FinOps)
+- **Storage Tier Hierarchy** (relative monthly cost per GB): **RAM** ($\sim\$5\text{–}\$10$) $\gg$ **NVMe Block / EBS** ($\sim\$0.08\text{–}\$0.12$) $\gg$ **Object Storage / S3 Standard** ($\sim\$0.023$) $\gg$ **Cold Archive / Glacier** ($\sim\$0.001$).
+- **Network Transfer Trap**: Cross-AZ traffic inside a cloud region typically costs $\sim\$0.01\text{–}\$0.02/\text{GB}$ *both ways*, and internet egress costs $\sim\$0.05\text{–}\$0.09/\text{GB}$. Topology-aware routing (AZ-local reads) and CDN offload save massive infrastructure spend at scale.

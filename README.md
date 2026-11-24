@@ -2,7 +2,7 @@
 
 > **A first-principles curriculum for mastering distributed systems, modern AI infrastructure, and system design interviews—with co-located theory guides, origin stories, revision checklists, and ByteByteGo-style interactive browser simulations.**
 
-[![Curriculum](https://img.shields.io/badge/Curriculum-11%20Modules%20%E2%80%A2%2056%20Topics%20%E2%80%A2%2015%20Case%20Studies-7c3aed)](#%EF%B8%8F-master-curriculum-roadmap)
+[![Curriculum](https://img.shields.io/badge/Curriculum-11%20Modules%20%E2%80%A2%2058%20Topics%20%E2%80%A2%2017%20Case%20Studies-7c3aed)](#%EF%B8%8F-master-curriculum-roadmap)
 [![Interactive Labs](https://img.shields.io/badge/Interactive%20Labs-ByteByteGo%20SVG%20Simulators-059669)](#-how-to-run-the-interactive-simulations)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/HamzaDevv/System_Design)
 [![Repo](https://img.shields.io/badge/GitHub-HamzaDevv%2FSystem__Design-181717?logo=github)](https://github.com/HamzaDevv/System_Design)
@@ -21,13 +21,13 @@ This repository follows a **"Discoverer" First-Principles Methodology** where **
 
 ---
 
-## 🗺️ Master Curriculum Roadmap (`Final v1.0`)
+## 🗺️ Master Curriculum Roadmap (`Final v1.1`)
 
 ```text
 [00. Foundations, Networking & Mental Models]
                       │
                       ▼
-[01. Scalability, Proxies & Load Balancing]
+[01. Scalability, Proxies, Compute & Load Balancing]
                       │
                       ▼
 [02. Caching Architectures & Edge Delivery]
@@ -54,7 +54,7 @@ This repository follows a **"Discoverer" First-Principles Methodology** where **
 [09. Modern AI & ML Infrastructure System Design]
                       │
                       ▼
-[10. 15 End-to-End System Design Case Studies]
+[10. 17 End-to-End System Design Case Studies]
 ```
 
 ---
@@ -63,20 +63,20 @@ This repository follows a **"Discoverer" First-Principles Methodology** where **
 
 | Module | Core Topics Covered | Interactive Visual Lab | Status |
 |---|---|---|:---:|
-| **[00. Foundations & Networking](00-foundations/)** | Request-Response Lifecycle (DNS, TCP, TLS 1.3, HTTP), HTTP/1.1 vs HTTP/2 vs HTTP/3 QUIC, REST vs gRPC vs GraphQL, WebSockets/SSE/WebRTC, Latency Numbers & Capacity Math, Serialization & Compression | [Packet Lifecycle](00-foundations/01-request-response-lifecycle/simulation.html) • [Protocol Evolution](00-foundations/02-protocol-evolution/simulation.html) | 🟢 Active (`2/6`) |
-| **[01. Scalability & Load Balancing](01-scalability-load-balancing/)** | Horizontal vs Vertical Scaling, Statelessness, Reverse Proxies & API Gateways, L4 vs L7 Load Balancing, LB Algorithms, Consistent Hashing & Virtual Nodes, Service Discovery | [Load Balancer Simulator](01-scalability-load-balancing/04-load-balancing-algorithms/simulation.html) | 🟡 Lab Live (`0/6`) |
+| **[00. Foundations & Networking](00-foundations/)** | Request-Response Lifecycle (DNS, TCP/UDP, IPv4/IPv6, OSI, TLS 1.3, HTTP), HTTP/1.1 vs HTTP/2 vs HTTP/3 QUIC, REST vs gRPC vs GraphQL + Webhooks, WebSockets/SSE/WebRTC, Latency/Availability Nines & FinOps Math, Serialization & Compression | [Packet Lifecycle](00-foundations/01-request-response-lifecycle/simulation.html) • [Protocol Evolution](00-foundations/02-protocol-evolution/simulation.html) | 🟢 Active (`2/6`) |
+| **[01. Scalability, Compute & LB](01-scalability-load-balancing/)** | Horizontal vs Vertical Scaling & Scale Cube, Reverse Proxies & API Gateways, L4 vs L7 Load Balancing & GeoDNS/GSLB, LB Algorithms, Consistent Hashing & Virtual Nodes, Service Discovery, Monolith vs Microservices & Service Mesh (Envoy), Containers/MicroVMs & C10K `epoll` I/O | [Load Balancer Simulator](01-scalability-load-balancing/04-load-balancing-algorithms/simulation.html) | 🟡 Lab Live (`0/8`) |
 | **[02. Caching & Edge Delivery](02-caching-and-cdn/)** | Cache-Aside / Write-Through / Write-Behind, Eviction (LRU, LFU, W-TinyLFU, ARC), Penetration / Hot-Key Breakdown / Stampede, Redis Internals & Cluster, CDNs & Anycast | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
-| **[03. Storage Systems & Databases](03-database-storage-systems/)** | SQL vs NoSQL, MVCC & Isolation Levels, CAP & PACELC, Replication Lag & Quorums, Sharding & Hotspots, B+Trees vs LSM-Trees, 2PC / Outbox / Sagas, Object Storage & Columnar OLAP | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
+| **[03. Storage Systems & Databases](03-database-storage-systems/)** | SQL vs NoSQL + Normalization/Denormalization, MVCC, Isolation & Linearizability, CAP & PACELC, Replication Lag & CRDTs, Sharding & Federation, B+Trees vs LSM-Trees & Indexing, 2PC / Outbox / Sagas, Block/File/Object Storage (Pre-Signed URLs) & Columnar OLAP/Lakehouse | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
 | **[04. Async Processing & Streams](04-asynchronous-messaging/)** | Queues vs Event Logs, Kafka Internals (Partitions, Offsets, Zero-Copy, ISR), Delivery Guarantees & Idempotency, Event Sourcing, CQRS & CDC, Distributed Job Scheduling | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
 | **[05. Reliability & Fault Tolerance](05-resilience-fault-tolerance/)** | Grey & Cascading Failures, Rate Limiting (Token/Leaky Bucket, Sliding Window), Circuit Breakers, Backoff & Full Jitter, Bulkheads & Load Shedding, Multi-Region Active-Active & RPO/RTO | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
 | **[06. Consensus, Coordination & Time](06-distributed-consensus-coordination/)** | Two Generals & FLP Impossibility, Raft & Paxos, Distributed Locking & Fencing Tokens (etcd/ZooKeeper), Gossip & SWIM, Snowflake / UUIDv7, Lamport, Vector Clocks & TrueTime | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
-| **[07. Search, Real-Time & Geospatial](07-search-realtime-geospatial/)** | Full-Text Inverted Indexes & BM25, 1M+ Concurrent WebSockets & Presence, Geospatial Indexing (Geohash, Quadtree, S2, H3), Batch vs Stream Processing & Windowing | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
-| **[08. Security, Observability & Prod](08-security-observability-production/)** | AuthN/AuthZ (Sessions, JWT, OAuth2/OIDC, RBAC), mTLS, KMS & DDoS Defence, Logging/Metrics/Tracing (OpenTelemetry & p99), SLIs/SLOs/Error Budgets, Zero-Downtime Deployments | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
-| **[09. Modern AI & ML Infrastructure](09-ai-ml-systems/)** | Vector Search (HNSW, IVF-PQ) & Hybrid Retrieval, LLM Serving (Prefill/Decode, KV Cache, PagedAttention, Continuous Batching), AI Gateways & Semantic Caching, Recommendation Pipelines | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
-| **[10. End-to-End Case Studies](10-case-studies/)** | 15 Full Blueprints: TinyURL, Rate Limiter, Autocomplete/Crawler, Notifications, WhatsApp Chat, Newsfeed, Dropbox, YouTube/Netflix, Ticketmaster, Uber, Stripe/UPI Ledger, Google Docs, Datadog, Ad Aggregator, Enterprise RAG | End-to-End Architecture Blueprints | ⚪ Planned |
+| **[07. Search, Real-Time & Geospatial](07-search-realtime-geospatial/)** | Full-Text Inverted Indexes & BM25, 1M+ Concurrent WebSockets & Presence, Geospatial Indexing (Geohash, Quadtree, S2, H3) & Proximity/Maps, Batch/Stream ETL, MapReduce/Spark Shuffle, Windowing & Top-K Heavy Hitters | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
+| **[08. Security, Observability & Prod](08-security-observability-production/)** | AuthN/AuthZ (Sessions, JWT, OAuth2/OIDC, RBAC), mTLS, KMS & DDoS Defence, Logging/Metrics/Tracing (OpenTelemetry & p99), SLIs/SLOs/Error Budgets, Zero-Downtime Deployments, Expand-Contract Migrations & 9 Types of API Testing | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
+| **[09. Modern AI & ML Infrastructure](09-ai-ml-systems/)** | Vector Search (HNSW, IVF-PQ) & Hybrid Retrieval, LLM Serving (Prefill/Decode, KV Cache, PagedAttention, Continuous Batching), AI Gateways & Semantic Caching, Recommendation Pipelines, Distributed ML Training & Agentic AI Systems | [Simulation Hub](index.html) *(Planned)* | ⚪ Planned |
+| **[10. End-to-End Case Studies](10-case-studies/)** | 17 Full Blueprints: TinyURL, Rate Limiter, Autocomplete/Crawler, Notifications, WhatsApp Chat, Newsfeed, Dropbox, YouTube/Netflix, Ticketmaster, Uber/Maps, Stripe/UPI Ledger, Google Docs, Datadog, Ad Aggregator/Leaderboard, Enterprise RAG, Dynamo KV Store, Job Scheduler | End-to-End Architecture Blueprints | ⚪ Planned |
 
 <details>
-<summary><strong>📌 View All 15 Module 10 Case Studies</strong></summary>
+<summary><strong>📌 View All 17 Module 10 Case Studies</strong></summary>
 
 1. **TinyURL / URL Shortener & Pastebin** — Base62, KGS, read-heavy caching
 2. **Distributed Rate Limiter Service** — Edge enforcement, Redis Lua atomicity
@@ -87,12 +87,14 @@ This repository follows a **"Discoverer" First-Principles Methodology** where **
 7. **Cloud File Storage & Sync (Dropbox / Google Drive)** — Block chunking, dedup, delta sync
 8. **Video Streaming Platform (YouTube / Netflix)** — Transcoding DAG, HLS/DASH, Open Connect CDN
 9. **Flash Sale & Ticket Booking (Ticketmaster / BookMyShow)** — Seat hold TTL, waiting rooms, locking
-10. **Ride-Sharing Dispatch (Uber / Ola)** — Geospatial indexing, location streams, matching & ETA
+10. **Ride-Sharing & Proximity Dispatch (Uber / Ola / Yelp)** — Geospatial indexing, location streams, matching & ETA
 11. **Payment Gateway & Double-Entry Ledger (Stripe / UPI)** — Strict idempotency, reconciliation
 12. **Collaborative Document Editor (Google Docs)** — Operational Transformation vs CRDTs
 13. **Distributed Metrics & Monitoring (Datadog / Prometheus)** — High-write TSDB, downsampling
-14. **Ad Click Aggregator & Gaming Leaderboard** — Stream windowing, Redis Sorted Sets
+14. **Ad Click Aggregator, Top-K Heavy Hitters & Gaming Leaderboard** — Stream windowing, Count-Min Sketch, Redis Sorted Sets
 15. **Enterprise RAG & AI Copilot Platform** — Hybrid search, multi-tenant ACLs, streaming tokens
+16. **Distributed Key-Value Store (Amazon Dynamo / Cassandra)** — Consistent hashing, sloppy quorums, Merkle trees, LSM
+17. **Distributed Job & Workflow Scheduler (Cron / Temporal / Airflow)** — Partitioned time buckets, idempotent workers, leases & DAG state
 
 </details>
 

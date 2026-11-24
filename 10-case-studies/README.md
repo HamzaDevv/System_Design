@@ -1,8 +1,8 @@
 # 🏗️ Module 10: End-to-End System Design Case Studies
 
-> [← Master Roadmap](../README.md) • [🏠 Simulation Hub](../index.html) • **Status: ⚪ Planned (`0/15`)**
+> [← Master Roadmap](../README.md) • [🏠 Simulation Hub](../index.html) • **Status: ⚪ Planned (`0/17`)**
 
-Applying Modules `00` through `09` to 15 complete, production-grade architectures using our [4-Step System Design Interview Framework](../cheatsheets/interview-framework-and-rubric.md).
+Applying Modules `00` through `09` to 17 complete, production-grade architectures using our [4-Step System Design Interview Framework](../cheatsheets/interview-framework-and-rubric.md).
 
 ---
 
@@ -19,9 +19,11 @@ Applying Modules `00` through `09` to 15 complete, production-grade architecture
 | **10.7** | **Cloud File Storage (Dropbox / Drive)** | Block chunking, Content-addressed deduplication, Delta sync | ⚪ Planned |
 | **10.8** | **Video Streaming (YouTube / Netflix)** | Transcoding DAG, Adaptive Bitrate HLS/DASH, Open Connect CDN | ⚪ Planned |
 | **10.9** | **Flash Sale & Ticket Booking** | Seat hold TTL, Optimistic/Distributed locks, Virtual waiting rooms | ⚪ Planned |
-| **10.10** | **Ride-Sharing Dispatch (Uber / Ola)** | Geospatial indexing, Driver location streams, Matching & ETA | ⚪ Planned |
+| **10.10** | **Ride-Sharing & Proximity Dispatch (Uber / Ola / Yelp)** | Geospatial indexing, Driver location streams, Matching & ETA | ⚪ Planned |
 | **10.11** | **Payment Gateway & Double-Entry Ledger** | Strict idempotency, Exactly-once ledger, Async reconciliation | ⚪ Planned |
 | **10.12** | **Collaborative Editor (Google Docs)** | Operational Transformation (OT) vs CRDTs, Cursor presence | ⚪ Planned |
 | **10.13** | **Metrics & Log Monitoring (Datadog)** | High-write Time-Series DB, Downsampling, Streaming alerts | ⚪ Planned |
-| **10.14** | **Ad Click Aggregator & Leaderboard** | Stream windowing, Late-data reconciliation, Redis Sorted Sets | ⚪ Planned |
+| **10.14** | **Ad Click Aggregator, Top-K Heavy Hitters & Leaderboard** | Stream windowing, Count-Min Sketch, Late-data reconciliation, Redis Sorted Sets | ⚪ Planned |
 | **10.15** | **Enterprise RAG & AI Copilot Platform** | Hybrid search, Multi-tenant ACLs, Streaming tokens & Observability | ⚪ Planned |
+| **10.16** | **Distributed Key-Value Store (Dynamo / Cassandra)** | Consistent hashing, Sloppy quorums, Hinted handoff, Merkle trees & LSM | ⚪ Planned |
+| **10.17** | **Distributed Job & Workflow Scheduler (Cron / Temporal)** | Partitioned time buckets, Idempotent workers, Leases, DLQ & DAG state | ⚪ Planned |

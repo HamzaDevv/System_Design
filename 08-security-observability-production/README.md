@@ -14,6 +14,6 @@ Hardening production architectures against attackers, measuring tail-latency tru
 | **08.2** | **Network & Data Security** | mTLS, Zero Trust, Envelope Encryption, KMS, WAF & DDoS Mitigation | ⚪ Planned |
 | **08.3** | **The Three Pillars of Observability** | Structured Logging, Metrics/Histograms & p99, OpenTelemetry Tracing | ⚪ Planned |
 | **08.4** | **SLIs, SLOs, SLAs & Error Budgets** | Reliability engineering targets and alert hygiene | ⚪ Planned |
-| **08.5** | **Zero-Downtime Deployments & Migrations** | Blue-Green, Canary, Shadow Traffic, Expand-Contract DB Migrations | ⚪ Planned |
+| **08.5** | **Zero-Downtime Deployments, Migrations & API Testing** | Blue-Green, Canary, Shadow Traffic, Feature Flags, Expand-Contract DB Migrations & 9 Types of API Testing (Smoke, Contract, Load, Stress, Fuzz) | ⚪ Planned |
 
 - **Planned Interactive Lab**: `Distributed Trace Waterfall & p99 Tail-Latency Explorer`
