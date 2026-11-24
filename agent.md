@@ -112,7 +112,7 @@ Every simulation `index.html` must include these 5 clean vertical bands:
 | **Current Topic** | `00.2 Protocol Evolution: HTTP/1.1 vs HTTP/2 Multiplexing vs HTTP/3 (QUIC)` |
 | **Stage** | `Completed (Documentation + ByteByteGo-Style Whiteboard Simulation)` |
 | **Next Topic** | `00.3 Communication Paradigms (REST vs gRPC & Protobuf vs GraphQL)` |
-| **Last Checkpoint Commit** | `000ebb2` (*docs(agent): lock master syllabus v1.0 and codify ByteByteGo simulation design system spec*) |
+| **Last Checkpoint Commit** | `12c824f` (*feat(module-00): add Topic 00.2 Protocol Evolution guide, AI visual, and ByteByteGo-style interactive lab*) |
 
 ---
 
