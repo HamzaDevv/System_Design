@@ -44,8 +44,8 @@ For every single topic in our roadmap, we execute this sequence:
 |---|---|
 | **Current Module** | `Module 00: Foundations, Network Protocols & Mental Models` |
 | **Current Topic** | `01. The Request-Response Lifecycle: DNS, TCP Handshake, TLS 1.3 & HTTP` |
-| **Stage** | `Stage 1: First-Principles Discovery & Deep-Dive Notes` |
-| **Last Checkpoint Commit** | `51b61a2` (*Initial repository scaffold & Load Balancer Lab*) |
+| **Stage** | `Stage 1: Completed (Documentation + Refined Simulation)` |
+| **Last Checkpoint Commit** | `a1565d4` (*feat(simulator): refine packet lifecycle UI with clean controls, pause state, and segmented navigation*) |
 
 ---
 
