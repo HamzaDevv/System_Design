@@ -1,0 +1,11 @@
+# System Design Repository - Git Ignore
+
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+dist/
+.env
+.env.local
+.vscode/
+.idea/

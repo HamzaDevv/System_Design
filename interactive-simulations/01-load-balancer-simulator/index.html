@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Load Balancer Simulator | System Design Lab</title>
+  <style>
+    :root {
+      --bg-dark: #0a0d16;
+      --card-bg: #121829;
+      --card-border: #222d4a;
+      --accent-cyan: #00f2fe;
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 1.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      display: grid;
+      place-items: center;
+      font-size: 1.1rem;
+    }
+
+    .back-btn {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      color: #fff;
+      border-color: var(--accent-cyan);
+    }
+
+    /* Main Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr 340px;
+      gap: 1.5rem;
+      flex-grow: 1;
+    }
+
+    @media (max-width: 1200px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .panel-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #fff;
+    }
+
+    /* Controls */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    label {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    select, button {
+      font-family: inherit;
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.9rem;
+      border: 1px solid var(--card-border);
+      background: #1a2238;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    select:focus, button:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      color: #060b18;
+      font-weight: 700;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-group button {
+      flex: 1;
+    }
+
+    /* Canvas Stage */
+    .stage-container {
+      position: relative;
+      background: #080c16;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    canvas {
+      width: 100%;
+      height: 480px;
+      display: block;
+    }
+
+    /* Server cards list */
+    .server-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .server-card {
+      background: #161f36;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .server-card.down {
+      opacity: 0.45;
+      filter: grayscale(1);
+      border-color: var(--accent-red);
+    }
+
+    .server-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .server-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+
+    .status-dot.offline {
+      background: var(--accent-red);
+      box-shadow: 0 0 8px var(--accent-red);
+    }
+
+    .server-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .server-weight-input {
+      width: 55px;
+      padding: 0.2rem 0.4rem;
+      background: #0d1322;
+      border: 1px solid var(--card-border);
+      border-radius: 4px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    .toggle-node-btn {
+      padding: 0.2rem 0.5rem;
+      font-size: 0.75rem;
+      border-radius: 4px;
+    }
+
+    /* Logs & Stats */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .metric-card {
+      background: #161f36;
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    .metric-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+    }
+
+    .metric-lbl {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 0.2rem;
+    }
+
+    .log-box {
+      background: #070a12;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.6rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .log-item {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .log-time { color: var(--text-muted); }
+    .log-success { color: var(--accent-green); }
+    .log-warn { color: var(--accent-amber); }
+    .log-error { color: var(--accent-red); }
+
+    /* Explanation Box */
+    .info-card {
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 0.82rem;
+      color: #bfdbfe;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header>
+    <a href="../index.html" class="brand">
+      <div class="brand-icon">⚖️</div>
+      <div>
+        <h1 style="font-size: 1.1rem; font-weight: 700;">Load Balancer Simulator</h1>
+        <p style="font-size: 0.75rem; color: var(--text-muted);">Module 01: High Availability & Traffic Distribution</p>
+      </div>
+    </a>
+    <a href="../index.html" class="back-btn">← Back to Simulation Hub</a>
+  </header>
+
+  <!-- Main Simulator Layout -->
+  <main class="dashboard-grid">
+
+    <!-- Column 1: Config & Controls -->
+    <aside class="panel">
+      <h2 class="panel-title">⚙️ Algorithm & Traffic</h2>
+
+      <div class="control-group">
+        <label for="algorithmSelect">Load Balancing Algorithm</label>
+        <select id="algorithmSelect">
+          <option value="round_robin">Round Robin (Sequential)</option>
+          <option value="weighted_round_robin">Weighted Round Robin</option>
+          <option value="least_connections">Least Connections</option>
+          <option value="random">Random Distribution</option>
+          <option value="ip_hash">IP Hash / Consistent Hash</option>
+        </select>
+      </div>
+
+      <div class="info-card" id="algoExplanation">
+        <strong>Round Robin:</strong> Cycles through active servers sequentially one by one ($S_1 \rightarrow S_2 \rightarrow S_3$). Ideal when backend server capacities are homogeneous.
+      </div>
+
+      <div class="control-group">
+        <label>Traffic Dispatcher</label>
+        <button class="btn-primary" id="btnSingle">🚀 Send Single Request</button>
+        <div class="btn-group" style="margin-top: 0.5rem;">
+          <button id="btnContinuous">▶ Start Traffic (5/s)</button>
+          <button id="btnBurst">⚡ Burst (20)</button>
+        </div>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid var(--card-border);">
+
+      <div class="panel-title">🖥️ Server Nodes</div>
+      <div class="server-list" id="serverListContainer">
+        <!-- Rendered by JS -->
+      </div>
+    </aside>
+
+    <!-- Column 2: Visual Canvas Area -->
+    <section class="stage-container">
+      <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);">Traffic Canvas</span>
+        <span style="font-size: 0.75rem; color: var(--accent-cyan); font-family: var(--font-mono);">Live Packets Active: <span id="activePacketsCount">0</span></span>
+      </div>
+      <canvas id="simCanvas"></canvas>
+    </section>
+
+    <!-- Column 3: Metrics & Live Logs -->
+    <aside class="panel">
+      <h2 class="panel-title">📊 Cluster Metrics</h2>
+
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-val" id="totalRequests">0</div>
+          <div class="metric-lbl">Total Requests</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="activeConnections">0</div>
+          <div class="metric-lbl">Active In-Flight</div>
+        </div>
+      </div>
+
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-val" id="avgLatency">45ms</div>
+          <div class="metric-lbl">Avg Response Time</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="droppedRequests" style="color: var(--accent-red);">0</div>
+          <div class="metric-lbl">503 Service Unavailable</div>
+        </div>
+      </div>
+
+      <div class="panel-title" style="margin-top: 0.5rem;">📜 Live Gateway Access Log</div>
+      <div class="log-box" id="logBox">
+        <div class="log-item">
+          <span class="log-time">[Init]</span>
+          <span class="log-success">Load balancer cluster initialized with 4 nodes.</span>
+        </div>
+      </div>
+
+      <button id="btnReset" class="btn-danger" style="margin-top: auto;">🧹 Reset Simulator</button>
+    </aside>
+
+  </main>
+
+  <script>
+    // --- STATE CONFIGURATION ---
+    const servers = [
+      { id: 1, name: "Worker-01 (US-East)", ip: "10.0.1.10", weight: 1, activeConns: 0, handledTotal: 0, isOnline: true },
+      { id: 2, name: "Worker-02 (US-East)", ip: "10.0.1.11", weight: 2, activeConns: 0, handledTotal: 0, isOnline: true },
+      { id: 3, name: "Worker-03 (US-West)", ip: "10.0.2.20", weight: 1, activeConns: 0, handledTotal: 0, isOnline: true },
+      { id: 4, name: "Worker-04 (EU-Central)", ip: "10.0.3.30", weight: 3, activeConns: 0, handledTotal: 0, isOnline: true }
+    ];
+
+    let packets = [];
+    let rrIndex = 0;
+    let wrrIndex = 0;
+    let wrrCurrentWeight = 0;
+    let continuousInterval = null;
+    let totalRequestsCount = 0;
+    let droppedRequestsCount = 0;
+
+    const algoExplanations = {
+      round_robin: "<strong>Round Robin:</strong> Cycles through active servers sequentially one by one (S1 → S2 → S3). Ideal when server hardware and request latencies are uniform.",
+      weighted_round_robin: "<strong>Weighted Round Robin:</strong> Allocates traffic proportionally to configured server weights. Higher-spec servers (e.g. 8-core vs 2-core) handle proportionally higher traffic.",
+      least_connections: "<strong>Least Connections:</strong> Directs traffic to the server with the fewest active, currently processing connections. Best for long-lived sessions (WebSockets, DB queries).",
+      random: "<strong>Random:</strong> Distributes requests completely randomly using pseudorandom selection. Uniformly distributes traffic over large sample sizes via the law of large numbers.",
+      ip_hash: "<strong>IP / Consistent Hashing:</strong> Hashes the client's IP address to map them deterministically to the same server (Session Persistence / Sticky Sessions)."
+    };
+
+    // --- DOM REFERENCES ---
+    const canvas = document.getElementById("simCanvas");
+    const ctx = canvas.getContext("2d");
+    const serverListContainer = document.getElementById("serverListContainer");
+    const algorithmSelect = document.getElementById("algorithmSelect");
+    const algoExplanation = document.getElementById("algoExplanation");
+    const btnSingle = document.getElementById("btnSingle");
+    const btnContinuous = document.getElementById("btnContinuous");
+    const btnBurst = document.getElementById("btnBurst");
+    const btnReset = document.getElementById("btnReset");
+    const totalRequestsEl = document.getElementById("totalRequests");
+    const activeConnectionsEl = document.getElementById("activeConnections");
+    const droppedRequestsEl = document.getElementById("droppedRequests");
+    const activePacketsEl = document.getElementById("activePacketsCount");
+    const logBox = document.getElementById("logBox");
+
+    // --- CANVAS RESIZE ---
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = Math.max(480, canvas.parentElement.clientHeight - 40);
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    // --- RENDER SERVER LIST CONTROLS ---
+    function renderServerList() {
+      serverListContainer.innerHTML = "";
+      servers.forEach((srv) => {
+        const card = document.createElement("div");
+        card.className = `server-card ${srv.isOnline ? "" : "down"}`;
+        card.innerHTML = `
+          <div class="server-header">
+            <div class="server-name">
+              <span class="status-dot ${srv.isOnline ? "" : "offline"}"></span>
+              <span>${srv.name}</span>
+            </div>
+            <button class="toggle-node-btn ${srv.isOnline ? "btn-danger" : "btn-primary"}" data-id="${srv.id}">
+              ${srv.isOnline ? "Kill Node" : "Revive"}
+            </button>
+          </div>
+          <div class="server-controls">
+            <span>Weight: 
+              <input type="number" min="1" max="10" value="${srv.weight}" class="server-weight-input" data-id="${srv.id}" ${srv.isOnline ? "" : "disabled"}>
+            </span>
+            <span>Handled: <strong>${srv.handledTotal}</strong></span>
+            <span>Active: <strong style="color: ${srv.activeConns > 0 ? "var(--accent-cyan)" : "inherit"}">${srv.activeConns}</strong></span>
+          </div>
+        `;
+        serverListContainer.appendChild(card);
+      });
+
+      // Bind node kill/revive buttons
+      serverListContainer.querySelectorAll(".toggle-node-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const srvId = parseInt(btn.getAttribute("data-id"));
+          const srv = servers.find(s => s.id === srvId);
+          if (srv) {
+            srv.isOnline = !srv.isOnline;
+            log(srv.isOnline ? "warn" : "error", `${srv.name} is now ${srv.isOnline ? "ONLINE (Health check passed)" : "OFFLINE (Simulated node crash)"}`);
+            renderServerList();
+          }
+        });
+      });
+
+      // Bind weight inputs
+      serverListContainer.querySelectorAll(".server-weight-input").forEach(input => {
+        input.addEventListener("change", (e) => {
+          const srvId = parseInt(input.getAttribute("data-id"));
+          const srv = servers.find(s => s.id === srvId);
+          if (srv) {
+            srv.weight = Math.max(1, parseInt(e.target.value) || 1);
+            log("info", `Updated ${srv.name} weight to ${srv.weight}`);
+          }
+        });
+      });
+    }
+
+    algorithmSelect.addEventListener("change", (e) => {
+      algoExplanation.innerHTML = algoExplanations[e.target.value] || "";
+      log("info", `Algorithm switched to: ${e.target.options[e.target.selectedIndex].text}`);
+    });
+
+    // --- LOGGING UTILITY ---
+    function log(type, msg) {
+      const time = new Date().toTimeString().split(" ")[0];
+      const item = document.createElement("div");
+      item.className = "log-item";
+      let colorClass = "log-success";
+      if (type === "warn") colorClass = "log-warn";
+      if (type === "error") colorClass = "log-error";
+      if (type === "info") colorClass = "log-time";
+
+      item.innerHTML = `<span class="log-time">[${time}]</span> <span class="${colorClass}">${msg}</span>`;
+      logBox.appendChild(item);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // --- ALGORITHM IMPLEMENTATIONS ---
+    function getOnlineServers() {
+      return servers.filter(s => s.isOnline);
+    }
+
+    function selectServer(clientIp) {
+      const active = getOnlineServers();
+      if (active.length === 0) return null;
+
+      const algo = algorithmSelect.value;
+
+      if (algo === "round_robin") {
+        const selected = active[rrIndex % active.length];
+        rrIndex = (rrIndex + 1) % active.length;
+        return selected;
+      }
+
+      if (algo === "weighted_round_robin") {
+        let maxWeight = 0;
+        let gcdWeight = 1;
+        active.forEach(s => { if (s.weight > maxWeight) maxWeight = s.weight; });
+        while (true) {
+          wrrIndex = (wrrIndex + 1) % active.length;
+          if (wrrIndex === 0) {
+            wrrCurrentWeight = wrrCurrentWeight - gcdWeight;
+            if (wrrCurrentWeight <= 0) {
+              wrrCurrentWeight = maxWeight;
+              if (wrrCurrentWeight === 0) return active[0];
+            }
+          }
+          if (active[wrrIndex].weight >= wrrCurrentWeight) {
+            return active[wrrIndex];
+          }
+        }
+      }
+
+      if (algo === "least_connections") {
+        let minServer = active[0];
+        for (let i = 1; i < active.length; i++) {
+          if (active[i].activeConns < minServer.activeConns) {
+            minServer = active[i];
+          }
+        }
+        return minServer;
+      }
+
+      if (algo === "random") {
+        const idx = Math.floor(Math.random() * active.length);
+        return active[idx];
+      }
+
+      if (algo === "ip_hash") {
+        let hash = 0;
+        for (let i = 0; i < clientIp.length; i++) {
+          hash = (hash << 5) - hash + clientIp.charCodeAt(i);
+          hash |= 0;
+        }
+        const idx = Math.abs(hash) % active.length;
+        return active[idx];
+      }
+
+      return active[0];
+    }
+
+    // --- TRAFFIC GENERATION ---
+    function sendRequest() {
+      totalRequestsCount++;
+      totalRequestsEl.innerText = totalRequestsCount;
+
+      const clientIp = `192.168.1.${Math.floor(Math.random() * 254) + 1}`;
+      const targetServer = selectServer(clientIp);
+
+      if (!targetServer) {
+        droppedRequestsCount++;
+        droppedRequestsEl.innerText = droppedRequestsCount;
+        log("error", `503 Service Unavailable: No healthy backend nodes found!`);
+        return;
+      }
+
+      targetServer.activeConns++;
+      activeConnectionsEl.innerText = servers.reduce((acc, s) => acc + s.activeConns, 0);
+
+      // Packet visual animation object
+      const startX = 60;
+      const startY = canvas.height / 2;
+      const lbX = canvas.width * 0.4;
+      const lbY = canvas.height / 2;
+
+      const targetIdx = servers.findIndex(s => s.id === targetServer.id);
+      const endX = canvas.width * 0.85;
+      const spacing = canvas.height / (servers.length + 1);
+      const endY = spacing * (targetIdx + 1);
+
+      packets.push({
+        x: startX,
+        y: startY,
+        progress: 0,
+        stage: 1, // 1: Client -> LB, 2: LB -> Server
+        startX, startY,
+        lbX, lbY,
+        endX, endY,
+        server: targetServer,
+        clientIp,
+        speed: 0.025 + Math.random() * 0.01
+      });
+
+      renderServerList();
+    }
+
+    btnSingle.addEventListener("click", () => sendRequest());
+
+    btnContinuous.addEventListener("click", () => {
+      if (continuousInterval) {
+        clearInterval(continuousInterval);
+        continuousInterval = null;
+        btnContinuous.innerText = "▶ Start Traffic (5/s)";
+        btnContinuous.style.background = "";
+      } else {
+        continuousInterval = setInterval(() => sendRequest(), 200);
+        btnContinuous.innerText = "⏹ Stop Traffic";
+        btnContinuous.style.background = "var(--accent-amber)";
+      }
+    });
+
+    btnBurst.addEventListener("click", () => {
+      let count = 0;
+      const burstInt = setInterval(() => {
+        sendRequest();
+        count++;
+        if (count >= 20) clearInterval(burstInt);
+      }, 50);
+    });
+
+    btnReset.addEventListener("click", () => {
+      if (continuousInterval) {
+        clearInterval(continuousInterval);
+        continuousInterval = null;
+        btnContinuous.innerText = "▶ Start Traffic (5/s)";
+        btnContinuous.style.background = "";
+      }
+      packets = [];
+      totalRequestsCount = 0;
+      droppedRequestsCount = 0;
+      totalRequestsEl.innerText = "0";
+      droppedRequestsEl.innerText = "0";
+      activeConnectionsEl.innerText = "0";
+      servers.forEach(s => {
+        s.activeConns = 0;
+        s.handledTotal = 0;
+        s.isOnline = true;
+      });
+      renderServerList();
+      log("info", "Simulator state cleanly reset.");
+    });
+
+    // --- ANIMATION LOOP ---
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const lbX = canvas.width * 0.4;
+      const lbY = canvas.height / 2;
+      const clientX = 60;
+      const clientY = canvas.height / 2;
+
+      // Draw connection wires
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+
+      // Client to LB
+      ctx.beginPath();
+      ctx.moveTo(clientX, clientY);
+      ctx.lineTo(lbX, lbY);
+      ctx.stroke();
+
+      // LB to Servers
+      const spacing = canvas.height / (servers.length + 1);
+      servers.forEach((srv, idx) => {
+        const srvX = canvas.width * 0.85;
+        const srvY = spacing * (idx + 1);
+        ctx.beginPath();
+        ctx.moveTo(lbX, lbY);
+        ctx.lineTo(srvX, srvY);
+        ctx.strokeStyle = srv.isOnline ? "rgba(0, 242, 254, 0.15)" : "rgba(239, 68, 68, 0.1)";
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+
+      // Draw Client Icon
+      ctx.fillStyle = "#3b82f6";
+      ctx.beginPath();
+      ctx.arc(clientX, clientY, 24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 11px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("CLIENTS", clientX, clientY + 4);
+
+      // Draw Load Balancer
+      const lbSize = 44;
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 242, 254, 0.4)";
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = "#1e293b";
+      ctx.strokeStyle = "var(--accent-cyan)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(lbX, lbY, lbSize, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "#00f2fe";
+      ctx.font = "bold 13px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("L7 PROXY", lbX, lbY - 6);
+      ctx.font = "10px monospace";
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText("HAProxy / Nginx", lbX, lbY + 12);
+
+      // Draw Servers
+      servers.forEach((srv, idx) => {
+        const srvX = canvas.width * 0.85;
+        const srvY = spacing * (idx + 1);
+        const w = 110;
+        const h = 48;
+
+        ctx.save();
+        if (srv.isOnline) {
+          ctx.shadowColor = "rgba(16, 185, 129, 0.2)";
+          ctx.shadowBlur = 10;
+          ctx.fillStyle = "#111827";
+          ctx.strokeStyle = srv.activeConns > 0 ? "#10b981" : "#374151";
+        } else {
+          ctx.fillStyle = "#1a1215";
+          ctx.strokeStyle = "#ef4444";
+        }
+        ctx.lineWidth = 2;
+        ctx.strokeRect(srvX - w/2, srvY - h/2, w, h);
+        ctx.fillRect(srvX - w/2, srvY - h/2, w, h);
+        ctx.restore();
+
+        ctx.fillStyle = srv.isOnline ? "#fff" : "#ef4444";
+        ctx.font = "bold 11px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(srv.name.split(" ")[0], srvX, srvY - 4);
+
+        ctx.font = "10px monospace";
+        ctx.fillStyle = srv.isOnline ? "#10b981" : "#991b1b";
+        ctx.fillText(srv.isOnline ? `${srv.activeConns} Active` : "OFFLINE", srvX, srvY + 12);
+      });
+
+      // Update and Draw Packets
+      for (let i = packets.length - 1; i >= 0; i--) {
+        const p = packets[i];
+        p.progress += p.speed;
+
+        if (p.stage === 1) {
+          // Client -> LB
+          p.x = p.startX + (p.lbX - p.startX) * p.progress;
+          p.y = p.startY + (p.lbY - p.startY) * p.progress;
+
+          if (p.progress >= 1) {
+            p.stage = 2;
+            p.progress = 0;
+            p.startX = p.lbX;
+            p.startY = p.lbY;
+          }
+        } else {
+          // LB -> Server
+          p.x = p.startX + (p.endX - p.startX) * p.progress;
+          p.y = p.startY + (p.endY - p.startY) * p.progress;
+
+          if (p.progress >= 1) {
+            // Completed request
+            p.server.handledTotal++;
+            p.server.activeConns = Math.max(0, p.server.activeConns - 1);
+            activeConnectionsEl.innerText = servers.reduce((acc, s) => acc + s.activeConns, 0);
+            renderServerList();
+            packets.splice(i, 1);
+            continue;
+          }
+        }
+
+        // Draw packet dot
+        ctx.fillStyle = "#00f2fe";
+        ctx.shadowColor = "#00f2fe";
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      activePacketsEl.innerText = packets.length;
+      requestAnimationFrame(draw);
+    }
+
+    // --- INITIALIZE ---
+    renderServerList();
+    draw();
+  </script>
+</body>
+</html>
