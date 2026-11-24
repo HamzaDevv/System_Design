@@ -1,20 +1,40 @@
-# ⚡ 02: Protocol Evolution — HTTP/1.1 vs HTTP/2 vs HTTP/3 (QUIC)
+# ⚡ 00.2: Protocol Evolution — HTTP/1.1 vs HTTP/2 vs HTTP/3 (QUIC)
+
+> **Module 00: Foundations, Networking & Mental Models** • [← Module Index](../README.md) • [🧪 Launch Interactive Simulation](./simulation.html) • [🏠 Simulation Hub](../../index.html)
 
 > *"The story of web protocol evolution is the story of human engineers continuously hitting physical network bottlenecks, discovering that their abstractions were leaking, and rewriting the stack from first principles."*
 
 ---
 
-## 🧭 The First-Principles Problem
+## 📜 Origin Story & History: Why Each Generation Was Invented
 
-In 1991, Tim Berners-Lee designed **HTTP/0.9** for a simple world: a client sent `GET /index.html`, the server replied with raw ASCII text, and immediately severed the TCP connection.
+Modern web protocols did not appear out of thin air—every single version was forged in crisis as the web outgrew its previous assumptions:
 
-Today, loading a modern web page or mobile app requires transferring **over 150 independent sub-resources**:
+1. **1991 — HTTP/0.9 (Tim Berners-Lee at CERN)**:
+   - Built for academic physics papers: plain ASCII text, no headers, no status codes. Send `GET /page.html`, receive HTML, and hang up the TCP phone call immediately.
+2. **1996 — HTTP/1.0 (RFC 1945) & The Connection Churn Crisis**:
+   - The Mosaic & Netscape browsers brought images and stylesheets. Suddenly one page needed 30+ requests. Opening and closing a brand-new TCP connection (3-way handshake + TCP slow-start) for *every single icon* made pages take 10+ seconds over dial-up and early broadband.
+3. **1997–1999 — HTTP/1.1 (RFC 2068 / 2616) & The Hacks Era**:
+   - Engineers added `Connection: keep-alive` to reuse TCP pipes and tried **HTTP Pipelining**.
+   - **What Broke**: Pipelining failed in the real world because responses had no Stream IDs—forcing strict FIFO ordering (**Application Head-of-Line Blocking**). Browsers disabled pipelining and resorted to ugly hacks: opening **6 parallel TCP sockets per domain**, **Domain Sharding** (`cdn1.`, `cdn2.`, `cdn3.`), **CSS Image Sprites**, and **JS Concatenation**.
+4. **2009–2015 — Google SPDY $\rightarrow$ HTTP/2 (RFC 7540)**:
+   - Google engineers Mike Belshe and Roberto Peon created **SPDY** inside Chrome to prove that multiplexing binary frames over a *single* TCP connection could double page load speed. IETF standardized this as **HTTP/2** in 2015.
+   - **What Broke**: Once HTTP/2 hit mobile 3G/4G networks, engineers discovered a cruel paradox: under $2\%$ packet loss, HTTP/2 often performed **worse** than 6 HTTP/1.1 sockets! Why? Because TCP enforced strict byte ordering on the single shared pipe—**one lost packet froze all 100 multiplexed streams** (**TCP Head-of-Line Blocking**).
+5. **2012–2022 — Google QUIC $\rightarrow$ HTTP/3 (RFC 9000 / 9114)**:
+   - Why didn't Google just patch TCP? **Protocol Ossification**: millions of enterprise firewalls, NAT boxes, and ISP routers on the internet drop TCP packets with unfamiliar headers. Updating TCP across the whole internet would take decades.
+   - **The Breakthrough**: Jim Roskind at Google realized UDP was the one transport envelope middleboxes left alone. Google rebuilt reliability, congestion control, stream independence, and TLS 1.3 encryption inside **user-space over UDP**, creating **QUIC** (standardized as **HTTP/3** in 2022). Today, QUIC powers over a third of global internet traffic!
+
+---
+
+## 🧭 The First-Principles Physical Problem
+
+Loading a modern web page or mobile app requires transferring **over 150 independent sub-resources**:
 - 30 JavaScript bundles and modules
 - 20 CSS stylesheets
 - 60 image assets, SVGs, and web fonts
 - Dozens of dynamic asynchronous JSON/gRPC API requests
 
-If you try to push 150 separate resources through the original 1990s protocols across real-world physical fiber cables and lossy wireless networks, the system collapses under its own latency overhead.
+If you try to push 150 separate resources through 1990s protocols across real-world physical fiber cables and lossy wireless networks, the system collapses under its own latency overhead.
 
 To solve this, the engineering community went through **three evolutionary revolutions**, each discovering and conquering a deeper layer of **Head-of-Line (HOL) Blocking**.
 
@@ -22,9 +42,11 @@ To solve this, the engineering community went through **three evolutionary revol
 
 ## 🪜 The Evolutionary Timeline: Summary of Breakthroughs
 
-![Protocol Evolution: HTTP/1.1 vs HTTP/2 vs HTTP/3](../assets/images/http-protocol-evolution.jpg)
+![Protocol Evolution: HTTP/1.1 vs HTTP/2 vs HTTP/3](./assets/http-protocol-evolution.jpg)
 
-```
+> 🧪 **Interactive Practice**: Open [`./simulation.html`](./simulation.html) to test HTTP/1.1 vs HTTP/2 vs HTTP/3 side-by-side and inject packet drops on Stream A to witness TCP vs QUIC behavior firsthand!
+
+```text
 1996: HTTP/1.0 ────> Connection Churn (1 TCP handshake per file)
         │
         ▼
@@ -45,7 +67,7 @@ To solve this, the engineering community went through **three evolutionary revol
 
 In HTTP/1.0, every single resource request required its own dedicated TCP connection:
 
-```
+```text
 Client                                                   Server
   │─── SYN ──────────────────────────────────────────────>│ (TCP Handshake)
   │<── SYN-ACK ───────────────────────────────────────────│
@@ -75,11 +97,11 @@ RFC 2616 (1999) solved connection churn by introducing **`Connection: keep-alive
 HTTP/1.1 also attempted **Pipelining**: allowing the client to send Request 2 before waiting for Response 1.
 
 #### The Fatal Flaw: Application-Layer Head-of-Line (HOL) Blocking
-HTTP/1.1 has no concept of stream IDs or message tags. Responses are delivered as a raw stream of bytes down the TCP socket. 
+HTTP/1.1 has no concept of stream IDs or message tags. Responses are delivered as a raw stream of bytes down the TCP socket.
 
 Because the client has no way to tell which byte belongs to which file, **the server is strictly forced to send responses in the exact order requests were received**:
 
-```
+```text
 Client                                                  Server
   │─── Request 1: GET /heavy-report.pdf (takes 3000ms) ──>│
   │─── Request 2: GET /avatar.png       (takes 5ms) ─────>│
@@ -100,7 +122,7 @@ To mitigate this architectural flaw, the industry invented complex workarounds:
 - **Browser Multi-Connection Limit**: Browsers opened 6 parallel TCP connections per domain.
 - **Domain Sharding**: Serving assets from `static1.example.com`, `static2.example.com`, `static3.example.com` to trick browsers into opening 18–24 concurrent TCP sockets.
 - **Image Sprites**: Stitching 50 small icons into one massive image to reduce request count.
-- **File Concatenation & Bundling**: Merging 40 JavaScript files into one giant bundle, breaking browser caching.
+- **File Concatenation & Bundling**: Merging 40 JavaScript files into one giant bundle, breaking granular browser caching.
 
 ---
 
@@ -111,7 +133,7 @@ Standardized in 2015 (RFC 7540, derived from Google's SPDY), **HTTP/2 completely
 #### Core Innovation 1: The Binary Framing Layer
 Instead of plain ASCII text lines separated by carriage returns (`\r\n`), HTTP/2 divides all communication into structured **binary frames**:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ Length (24 bits) │ Type (8 bits) │ Flags (8 bits)           │
 ├─────────────────────────────────────────────────────────────┤
@@ -122,20 +144,20 @@ Instead of plain ASCII text lines separated by carriage returns (`\r\n`), HTTP/2
 ```
 
 - **Headers Frame**: Contains HTTP headers compressed with HPACK.
-- **Data Frame**: Contains the actual payload payload bytes.
+- **Data Frame**: Contains the actual payload bytes.
 - **Stream ID**: A 31-bit integer identifying which logical request/response this frame belongs to.
 
 #### Core Innovation 2: Stream Multiplexing over 1 TCP Connection
 Because every frame is tagged with a `Stream Identifier`, client and server can **interleave frames from dozens of requests simultaneously down a single TCP connection**:
 
-```
+```text
 [TCP Stream]: [Frame Stream 1] [Frame Stream 3] [Frame Stream 1] [Frame Stream 2] [Frame Stream 3] ...
 ```
 
 The receiver simply reads the Stream ID and reassembles the independent resources in memory. **A slow request on Stream 1 no longer delays Stream 2 or Stream 3!**
 
 #### Core Innovation 3: HPACK Header Compression
-In HTTP/1.1, every request repeated identical headers (Cookie, User-Agent, Accept) averaging 500–1500 bytes of overhead. 
+In HTTP/1.1, every request repeated identical headers (`Cookie`, `User-Agent`, `Accept`) averaging 500–1500 bytes of overhead.
 HPACK maintains a synchronized **static table** (61 common header fields) and **dynamic table** between client and server, compressing headers by up to **85–90%**.
 
 ---
@@ -144,7 +166,7 @@ HPACK maintains a synchronized **static table** (61 common header fields) and **
 
 HTTP/2 was hailed as a triumph—until real-world mobile networks revealed a severe flaw.
 
-HTTP/2 runs on top of standard **TCP**. 
+HTTP/2 runs on top of standard **TCP**.
 TCP is fundamentally a **single, contiguous byte stream abstraction**. It guarantees:
 1. Every byte arrives.
 2. Every byte is delivered to the operating system in strict sequential order.
@@ -153,7 +175,7 @@ TCP is fundamentally a **single, contiguous byte stream abstraction**. It guaran
 Imagine an HTTP/2 connection carrying Stream 1 (image), Stream 2 (CSS), and Stream 3 (JavaScript).
 Packets are traveling across a lossy 4G cell tower. **One single packet belonging to Stream 1 is dropped**:
 
-```
+```text
 Packets Arriving at Client Kernel:
 [Pkt 1: Stream 1]  ✅ Received
 [Pkt 2: Stream 1]  ❌ DROPPED BY CELL TOWER!
@@ -175,7 +197,7 @@ The answer was **No**, due to **Protocol Ossification**: millions of enterprise 
 
 Google's solution was audacious: **Discard TCP entirely and build a new transport protocol (QUIC) on top of UDP** (standardized as HTTP/3 in 2022 via RFC 9000 & RFC 9114).
 
-```
+```text
   Traditional Stack (HTTP/2)             Modern Stack (HTTP/3)
 ┌────────────────────────────┐        ┌────────────────────────────┐
 │          HTTP/2            │        │          HTTP/3            │
@@ -207,7 +229,7 @@ QUIC merges the transport handshake and the cryptographic handshake into one sin
 A traditional TCP connection is permanently bound to a 4-tuple:
 $$\text{Connection} = (\text{Client IP}, \text{Client Port}, \text{Server IP}, \text{Server Port})$$
 
-When you leave your house and your smartphone switches from **Home Wi-Fi** to **Cellular 5G**, your phone gets a new IP address. 
+When you leave your house and your smartphone switches from **Home Wi-Fi** to **Cellular 5G**, your phone gets a new IP address.
 - Under TCP (HTTP/1.1 and HTTP/2), the connection instantly breaks. All downloads abort, video buffers freeze, and full handshakes must restart.
 - **QUIC solves this using a 64-bit Connection ID (CID)**: The connection identity is carried inside the QUIC header, independent of the network interface. When your phone transitions from Wi-Fi to 5G, it keeps using the same CID. The server seamlessly continues streaming data without any interruption!
 
@@ -237,3 +259,23 @@ When you leave your house and your smartphone switches from **Home Wi-Fi** to **
    - *Answer*: HPACK relies on in-order frame delivery to keep dynamic compression tables in sync between client and server. Because QUIC delivers streams out-of-order over UDP, an out-of-order header frame would corrupt the HPACK dynamic table! Therefore, HTTP/3 invented **QPACK**, which uses dedicated unidirectional control streams to synchronize dictionary updates independently.
 3. **"How does HTTP/2 Server Push work, and why was it deprecated in Chrome?"**
    - *Answer*: Server Push allowed servers to send CSS/JS files before the client asked for them. In practice, servers frequently pushed files that clients already had cached locally, wasting bandwidth and battery life. It was replaced by the `103 Early Hints` status code.
+
+---
+
+## 📝 Revision To-Do & Suggested Reading Checklist
+
+### 1. Suggested Reading for Revision
+- [ ] **Cloudflare Blog**: Read *"The Road to QUIC"* and *"HTTP/3: From Root to Tip"* to see real production packet-loss benchmarks.
+- [ ] **Book Chapter**: Read *High Performance Browser Networking* (Ilya Grigorik) — Chapters 11–12 (*HTTP/1.X* & *HTTP/2*).
+- [ ] **Engineering Deep Dive**: Read Daniel Stenberg's (author of `curl`) free ebook *"HTTP/3 Explained"* (sections on QUIC streams, QPACK, and Connection Migration).
+- [ ] **RFC Reference**: Skim RFC 9000 Section 2 (*Streams*) and RFC 9114 (*HTTP/3*).
+
+### 2. Historical Intuition Check (Self-Quiz)
+- [ ] Can I trace the exact evolutionary chain: `HTTP/1.0 connection churn → HTTP/1.1 app HOL blocking → HTTP/2 TCP HOL blocking → HTTP/3 QUIC over UDP`?
+- [ ] Can I explain why **Protocol Ossification** stopped engineers from simply modifying TCP instead of moving to UDP?
+- [ ] Can I explain why **QPACK** replaced **HPACK**, and how a 64-bit **Connection ID (CID)** enables Wi-Fi $\rightarrow$ 5G roaming?
+
+### 3. Interactive Lab Practice (`./simulation.html`)
+- [ ] Open [./simulation.html](./simulation.html) and run **HTTP/1.1** to observe Streams B & C waiting `2000ms` behind heavy Stream A.
+- [ ] Switch to **HTTP/2**, click **"Drop Packet (Stream A)"**, and dispatch: observe how one lost packet on Stream A freezes the entire TCP socket for Streams B and C.
+- [ ] Switch to **HTTP/3 (QUIC)** with **"Drop Packet (Stream A)"** active and dispatch: verify that Streams B (`style.css`) and C (`app.js`) finish in `~35ms` with zero Head-of-Line blocking!

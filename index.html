@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Design Visual Lab & Interactive Simulations</title>
+  <style>
+    :root {
+      --bg-page: #f4f6f9;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f8fafc;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+
+      --purple: #7c3aed;
+      --purple-bg: #f5f3ff;
+      --amber: #d97706;
+      --amber-bg: #fffbeb;
+      --sky: #0284c7;
+      --sky-bg: #f0f9ff;
+      --emerald: #059669;
+      --emerald-bg: #ecfdf5;
+      --rose: #e11d48;
+      --rose-bg: #fff1f2;
+
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.06);
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Sticky Header */
+    header {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      width: 100%;
+    }
+
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.85rem 0;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    }
+
+    .brand-text strong {
+      display: block;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+    }
+
+    .brand-text span {
+      display: block;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 0.65rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.4rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .nav-links a:hover {
+      background: var(--bg-subtle);
+      border-color: var(--border);
+      color: var(--text-primary);
+    }
+
+    /* Hero Whiteboard Banner */
+    .hero {
+      margin: 2rem 0;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2.75rem 2rem;
+      text-align: center;
+      box-shadow: var(--shadow-md);
+      background-image: radial-gradient(#d8e0eb 1.1px, transparent 1.1px);
+      background-size: 20px 20px;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.3rem 0.85rem;
+      background: var(--sky-bg);
+      border: 1px solid #bae6fd;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--sky);
+      margin-bottom: 1.1rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.9rem, 4vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      margin-bottom: 0.85rem;
+    }
+
+    .hero p {
+      color: var(--text-secondary);
+      font-size: 1.02rem;
+      max-width: 720px;
+      margin: 0 auto 2rem;
+    }
+
+    .stats-ribbon {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 1rem;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .stat-box {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-number {
+      font-family: var(--font-mono);
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .stat-label {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-top: 0.2rem;
+    }
+
+    /* Section Header */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 2.25rem 0 1.25rem;
+      padding-bottom: 0.65rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .section-sub {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Lab Grid */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (max-width: 640px) {
+      .sim-grid { grid-template-columns: 1fr; }
+    }
+
+    .sim-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.15rem;
+      box-shadow: var(--shadow-sm);
+      border-top: 4px solid var(--card-accent, var(--sky));
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .sim-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .sim-tag-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.65rem;
+    }
+
+    .sim-module-badge {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.22rem 0.55rem;
+      border-radius: 6px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .sim-status {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    .status-live {
+      background: var(--emerald-bg);
+      color: var(--emerald);
+      border: 1px solid #a7f3d0;
+    }
+
+    .status-upcoming {
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .sim-card h3 {
+      font-size: 1.12rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.45rem;
+    }
+
+    .sim-card p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin-bottom: 1rem;
+    }
+
+    .sim-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .feature-pill {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.18rem 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.6rem 0.9rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      border-radius: 8px;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid var(--border-strong);
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: var(--text-primary);
+      color: #fff;
+      border-color: var(--text-primary);
+    }
+
+    .btn-primary:hover {
+      background: #1e293b;
+    }
+
+    .btn-notes {
+      background: #fff;
+      color: var(--text-secondary);
+    }
+
+    .btn-notes:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    .btn-disabled {
+      width: 100%;
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      border-color: var(--border);
+      cursor: not-allowed;
+    }
+
+    footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      background: var(--bg-surface);
+      padding: 1.75rem 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: var(--sky);
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container nav-bar">
+      <a href="README.md" class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <strong>System Design Visual Lab</strong>
+          <span>Co-Located Notes &amp; Interactive Architecture Simulators</span>
+        </div>
+      </a>
+      <nav class="nav-links">
+        <a href="README.md">📖 Curriculum Map</a>
+        <a href="cheatsheets/latencies-numbers-every-programmer-should-know.md">⏱️ Latency Numbers</a>
+        <a href="cheatsheets/system-design-formulas-and-estimations.md">📐 Estimations</a>
+        <a href="https://github.com/HamzaDevv/System_Design" target="_blank" rel="noopener">⭐️ GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-pill">First-Principles Engineering • Zero-Dependency SVG Labs</div>
+      <h1>Visualizing Scale: Learn By Interacting</h1>
+      <p>
+        Every topic pairs historical origin stories and deep architectural guides with a self-contained browser simulation. Explore packet lifecycles, Head-of-Line blocking, load balancing, consensus, and caching in real time.
+      </p>
+
+      <div class="stats-ribbon">
+        <div class="stat-box">
+          <div class="stat-number">11</div>
+          <div class="stat-label">Locked Modules</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number">56</div>
+          <div class="stat-label">Core Topics</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number">15</div>
+          <div class="stat-label">Case Studies</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number">3 / 10+</div>
+          <div class="stat-label">Live Visual Labs</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">Interactive Architecture Simulators</h2>
+        <span class="section-sub">Co-located with topic theory • Runs 100% offline</span>
+      </div>
+
+      <div class="sim-grid">
+
+        <!-- Lab 00.1 -->
+        <article class="sim-card" style="--card-accent: var(--purple);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 00.1</span>
+              <span class="sim-status status-live">● Live Lab</span>
+            </div>
+            <h3>Request-Response Packet Lifecycle</h3>
+            <p>
+              Trace a browser request from keystroke to pixels: recursive DNS hierarchy (Resolver → Root → TLD → Auth), multi-hop BGP transit, TCP 3-way handshake, TLS 1.3 key exchange, and Cold vs. Warm Keep-Alive.
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">DNS Tree Walk</span>
+              <span class="feature-pill">Multi-Hop BGP</span>
+              <span class="feature-pill">TLS 1.3 Tunnel</span>
+              <span class="feature-pill">Live Wire Trace</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <a href="00-foundations/01-request-response-lifecycle/simulation.html" class="btn btn-primary">Launch Lab →</a>
+            <a href="00-foundations/01-request-response-lifecycle/README.md" class="btn btn-notes">Notes</a>
+          </div>
+        </article>
+
+        <!-- Lab 00.2 -->
+        <article class="sim-card" style="--card-accent: var(--emerald);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 00.2</span>
+              <span class="sim-status status-live">● Live Lab</span>
+            </div>
+            <h3>Protocol Evolution &amp; HOL Blocking Sandbox</h3>
+            <p>
+              Compare HTTP/1.1, HTTP/2, and HTTP/3 side by side. Trigger packet loss on Stream A to witness Application HOL Blocking vs. TCP HOL Blocking vs. QUIC independent streams over UDP.
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">HTTP/1.1 vs 2 vs 3</span>
+              <span class="feature-pill">Frame Multiplexing</span>
+              <span class="feature-pill">Packet Drop Chaos</span>
+              <span class="feature-pill">Waterfall View</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <a href="00-foundations/02-protocol-evolution/simulation.html" class="btn btn-primary">Launch Lab →</a>
+            <a href="00-foundations/02-protocol-evolution/README.md" class="btn btn-notes">Notes</a>
+          </div>
+        </article>
+
+        <!-- Lab 01.4 -->
+        <article class="sim-card" style="--card-accent: var(--sky);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 01.4</span>
+              <span class="sim-status status-live">● Live Lab</span>
+            </div>
+            <h3>Load Balancer &amp; Distribution Simulator</h3>
+            <p>
+              Route live traffic bursts across backend nodes using Round Robin, Weighted Round Robin, Least Connections, Random, and IP Hashing while injecting node crashes.
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">5 LB Algorithms</span>
+              <span class="feature-pill">Node Kill / Revive</span>
+              <span class="feature-pill">Burst Traffic</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <a href="01-scalability-load-balancing/04-load-balancing-algorithms/simulation.html" class="btn btn-primary">Launch Lab →</a>
+            <a href="01-scalability-load-balancing/README.md" class="btn btn-notes">Module</a>
+          </div>
+        </article>
+
+        <!-- Lab 02 -->
+        <article class="sim-card" style="--card-accent: var(--amber);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 02</span>
+              <span class="sim-status status-upcoming">○ Planned</span>
+            </div>
+            <h3>Cache Eviction &amp; Stampede Playground</h3>
+            <p>
+              Compare LRU, LFU, W-TinyLFU, and ARC eviction under skewed workloads. Trigger cache penetration and hot-key stampedes vs. Singleflight defense.
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">LRU / LFU / ARC</span>
+              <span class="feature-pill">Stampede &amp; Singleflight</span>
+            </div>
+          </div>
+          <button class="btn btn-disabled" disabled>Unlocks in Module 02</button>
+        </article>
+
+        <!-- Lab 03 -->
+        <article class="sim-card" style="--card-accent: var(--rose);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 03</span>
+              <span class="sim-status status-upcoming">○ Planned</span>
+            </div>
+            <h3>B+Tree vs. LSM-Tree &amp; Quorum Visualizer</h3>
+            <p>
+              Watch page splits in B+Trees vs. WAL + MemTable + SSTable compaction in LSM-Trees, and simulate leaderless Dynamo quorums (W + R &gt; N).
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">B+Tree vs LSM</span>
+              <span class="feature-pill">Bloom Filters</span>
+              <span class="feature-pill">Quorum Math</span>
+            </div>
+          </div>
+          <button class="btn btn-disabled" disabled>Unlocks in Module 03</button>
+        </article>
+
+        <!-- Lab 04 -->
+        <article class="sim-card" style="--card-accent: var(--emerald);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 04</span>
+              <span class="sim-status status-upcoming">○ Planned</span>
+            </div>
+            <h3>Kafka Partition &amp; Consumer Group Stream</h3>
+            <p>
+              Inspect key-hash partitioning, consumer group rebalances when a worker crashes, offset commits, and backpressure lag.
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">Partition Hashing</span>
+              <span class="feature-pill">Consumer Rebalance</span>
+            </div>
+          </div>
+          <button class="btn btn-disabled" disabled>Unlocks in Module 04</button>
+        </article>
+
+        <!-- Lab 05 -->
+        <article class="sim-card" style="--card-accent: var(--rose);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 05</span>
+              <span class="sim-status status-upcoming">○ Planned</span>
+            </div>
+            <h3>Rate Limiter &amp; Circuit Breaker Machine</h3>
+            <p>
+              Test Token Bucket, Leaky Bucket, and Sliding Window counters under traffic spikes, and watch Closed → Open → Half-Open circuit transitions.
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">Token / Leaky Bucket</span>
+              <span class="feature-pill">Circuit Breaker</span>
+            </div>
+          </div>
+          <button class="btn btn-disabled" disabled>Unlocks in Module 05</button>
+        </article>
+
+        <!-- Lab 06 -->
+        <article class="sim-card" style="--card-accent: var(--sky);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 06</span>
+              <span class="sim-status status-upcoming">○ Planned</span>
+            </div>
+            <h3>Raft Consensus &amp; Leader Election</h3>
+            <p>
+              Simulate election timeouts, split votes, heartbeats, network partitions, and majority quorum log replication across 5 cluster nodes.
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">Leader Election</span>
+              <span class="feature-pill">Split-Brain Safety</span>
+            </div>
+          </div>
+          <button class="btn btn-disabled" disabled>Unlocks in Module 06</button>
+        </article>
+
+        <!-- Lab 07 -->
+        <article class="sim-card" style="--card-accent: var(--purple);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 07</span>
+              <span class="sim-status status-upcoming">○ Planned</span>
+            </div>
+            <h3>Geohash, Quadtree &amp; Inverted Index</h3>
+            <p>
+              Explore how spatial grids subdivide dynamic driver density and how inverted indexes score full-text search results with BM25.
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">Geohash / Quadtree</span>
+              <span class="feature-pill">Inverted Index</span>
+            </div>
+          </div>
+          <button class="btn btn-disabled" disabled>Unlocks in Module 07</button>
+        </article>
+
+        <!-- Lab 08 -->
+        <article class="sim-card" style="--card-accent: var(--amber);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 08</span>
+              <span class="sim-status status-upcoming">○ Planned</span>
+            </div>
+            <h3>Distributed Trace &amp; p99 Tail-Latency Explorer</h3>
+            <p>
+              Visualize microservice fan-out amplification: why 1% slow leaf calls blow up overall p99 request latency across a trace waterfall.
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">OpenTelemetry Trace</span>
+              <span class="feature-pill">Tail Latency at Scale</span>
+            </div>
+          </div>
+          <button class="btn btn-disabled" disabled>Unlocks in Module 08</button>
+        </article>
+
+        <!-- Lab 09 -->
+        <article class="sim-card" style="--card-accent: var(--purple);">
+          <div>
+            <div class="sim-tag-row">
+              <span class="sim-module-badge">Module 09</span>
+              <span class="sim-status status-upcoming">○ Planned</span>
+            </div>
+            <h3>Hybrid Retrieval &amp; LLM Batching Lab</h3>
+            <p>
+              Explore dense HNSW vector + BM25 RRF fusion alongside prefill vs. decode phases and continuous batching in GPU inference queues.
+            </p>
+            <div class="sim-features">
+              <span class="feature-pill">HNSW + BM25</span>
+              <span class="feature-pill">KV Cache &amp; Batching</span>
+            </div>
+          </div>
+          <button class="btn btn-disabled" disabled>Unlocks in Module 09</button>
+        </article>
+
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>Built for engineers mastering distributed systems from first principles.</p>
+      <p style="margin-top: 0.35rem;">
+        Source: <a href="https://github.com/HamzaDevv/System_Design" target="_blank" rel="noopener">github.com/HamzaDevv/System_Design</a>
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

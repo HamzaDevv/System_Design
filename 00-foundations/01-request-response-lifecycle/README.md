@@ -1,10 +1,36 @@
-# 🌐 01: The Request-Response Lifecycle — From Keystroke to Pixels
+# 🌐 00.1: The Request-Response Lifecycle — From Keystroke to Pixels
+
+> **Module 00: Foundations, Networking & Mental Models** • [← Module Index](../README.md) • [🧪 Launch Interactive Simulation](./simulation.html) • [🏠 Simulation Hub](../../index.html)
 
 > *"Before you can design a distributed system across thousands of servers, you must understand the physical journey of a single packet across the wire."*
 
 ---
 
-## 🧭 The First-Principles Problem
+## 📜 Origin Story & History: Why These Layers Were Invented
+
+To appreciate why opening a single URL takes four distinct protocols (**DNS $\rightarrow$ TCP $\rightarrow$ TLS $\rightarrow$ HTTP**), step back into the early history of the internet when each layer was forced into existence by a real-world failure:
+
+1. **Why DNS Came (1983 — Paul Mockapetris & Elizabeth Feinler, RFC 882 / 883)**:
+   - In the 1970s ARPANET era, there were only a few hundred computers. A single text file called **`HOSTS.TXT`**—manually maintained by Elizabeth Feinler at Stanford Research Institute (SRI)—mapped every hostname to its IP address. Every night, administrators around the world had to FTP-download the latest `HOSTS.TXT`.
+   - **What Broke**: By 1983, ARPANET exploded to thousands of machines. `HOSTS.TXT` became huge, stale within hours, and SRI's central server couldn't handle the download traffic.
+   - **The Breakthrough**: Paul Mockapetris invented **DNS** as a decentralized, hierarchical, cached phonebook—splitting authority by domain levels (`.`, `.com`, `example.com`) so no single machine holds the entire internet or absorbs all query traffic.
+
+2. **Why TCP Came (1974 — Vint Cerf & Bob Kahn, RFC 675 / 793)**:
+   - Early ARPANET relied on NCP (Network Control Program), which assumed the underlying physical network was already clean and reliable. When researchers tried connecting incompatible radio, satellite, and cable networks together, packets routinely vanished, corrupted, or arrived out of order.
+   - **What Broke**: Applications couldn't handle raw dropped bytes on lossy physical links.
+   - **The Breakthrough**: Cerf and Kahn decoupled routing (**IP**: best-effort stateless packet forwarding) from reliability (**TCP**: sequence numbers, acknowledgments, retransmissions, and congestion backoff), creating an illusion of an unbreakable ordered pipe over a chaotic physical world.
+
+3. **Why TLS Came (1994–2018 — Netscape SSL $\rightarrow$ IETF TLS 1.3, RFC 8446)**:
+   - Originally, TCP/HTTP traffic traveled across wires in **pure plaintext**—any router, Wi-Fi hotspot, or undersea tap could read passwords and credit cards.
+   - **What Broke**: E-commerce in the mid-1990s was impossible without encryption, yet Netscape's SSL/TLS 1.2 required **2 extra round trips** just to agree on keys—making global HTTPS painfully slow.
+   - **The Breakthrough**: **TLS 1.3 (2018)** stripped away legacy insecure ciphers and compressed key negotiation into **1 RTT** (and **0-RTT** on repeat visits) using Diffie-Hellman Ephemeral key exchange.
+
+4. **Why HTTP Came (1989–1991 — Tim Berners-Lee at CERN)**:
+   - Physicists at CERN needed a universal, stateless document-exchange language across incompatible computers. Berners-Lee designed HTTP as ultra-simple human-readable text commands (`GET /doc`) sitting on top of TCP sockets.
+
+---
+
+## 🧭 The First-Principles Physical Problem
 
 Imagine you are sitting with your laptop in San Francisco. A server rack sits in a data center in Frankfurt, Germany ($8,800\text{ km}$ away). You type `https://api.example.com/checkout` into your browser and press **Enter**.
 
@@ -27,7 +53,9 @@ To achieve this, computer scientists had to solve **four fundamental physical di
 
 ## 🪜 The Complete Journey: Visualized
 
-![The Request-Response Lifecycle: From Keystroke to Pixels](../assets/images/request-response-lifecycle.jpg)
+![The Request-Response Lifecycle: From Keystroke to Pixels](./assets/request-response-lifecycle.jpg)
+
+> 🧪 **Interactive Practice**: Open [`./simulation.html`](./simulation.html) in your browser to watch DNS tree queries, multi-hop BGP transit, TCP 3-way handshakes, and TLS 1.3 negotiation animate in real time.
 
 ```mermaid
 sequenceDiagram
@@ -67,7 +95,7 @@ If all 5 billion internet users queried a single centralized computer for domain
 
 #### The Resolution Ladder:
 
-```
+```text
 [Browser / OS Cache] (Miss!)
          │
          ▼
@@ -89,7 +117,7 @@ If all 5 billion internet users queried a single centralized computer for domain
    - If not cached, the recursive resolver walks the global tree:
    - **Root Server (`.`)**: 13 root IP clusters replicated worldwide via Anycast. Replies: *"I don't know `api.example.com`, but here are the `.com` TLD servers."*
    - **TLD Server (`.com`)**: Managed by Verisign. Replies: *"Here are the Authoritative Name Servers for `example.com` (e.g., Cloudflare/AWS Route53)."*
-   - **Authoritative Server (`ns1.cloudflare.com`)**: Holds the ground-truth DNS records (A, AAAA, CNAME). Replies: `"api.example.com = 198.51.100.42"`.
+   - **Authoritative Server (`ns1.cloudflare.com`)**: Holds the ground-truth DNS records (`A`, `AAAA`, `CNAME`). Replies: `"api.example.com = 198.51.100.42"`.
 4. **Caching & TTL**: The response includes a **Time-To-Live (TTL)** in seconds. All intermediate nodes cache this mapping until the TTL expires, shielding the authoritative servers from $99.9\%$ of global traffic.
 
 > 💡 **Notice**: The Client **never queries the target API server** to resolve DNS! The DNS resolution happens entirely in the DNS hierarchy. Only *after* the client receives `198.51.100.42` does it begin connecting to Frankfurt!
@@ -137,7 +165,7 @@ Historically, TLS 1.2 required **2 additional round-trips (2 RTT)** to exchange 
 
 **TLS 1.3 revolutionized this by combining the key exchange into 1 single round-trip (1 RTT)**:
 
-```
+```text
 Client                                                  Server
   │                                                       │
   │─── ClientHello + Supported Ciphers + Key Share ─────>│ (Proposes Diffie-Hellman params)
@@ -205,24 +233,44 @@ If a client in California requests a server in Frankfurt, Germany ($150\text{ms}
 
 | Phase | Network Packets | Round Trips | Wall-Clock Time |
 |---|---|---|---|
-| **DNS Resolution** (if uncached) | Multiple UDP queries | 2–4 RTT | $\sim 100\text{--}250\text{ ms}$ |
+| **DNS Resolution** (if uncached) | Multiple UDP queries | 1–4 RTT | $\sim 150\text{ ms}$ |
 | **TCP 3-Way Handshake** | `SYN` $\rightarrow$ `SYN-ACK` $\rightarrow$ `ACK` | 1 RTT | $150\text{ ms}$ |
 | **TLS 1.3 Handshake** | `ClientHello` $\rightarrow$ `ServerHello` | 1 RTT | $150\text{ ms}$ |
-| **HTTP Request $\rightarrow$ Response** | Data packet $\rightarrow$ ACK + Data | 1 RTT | $150\text{ ms} + \text{Server processing (e.g. } 25\text{ms})$ |
-| **Total Cold Connection Latency** | | **3–4 RTT** | **$\approx 450\text{--}600\text{ ms}$!** |
+| **HTTP Request $\rightarrow$ Response** | Data packet $\rightarrow$ ACK + Data | 1 RTT | $150\text{ ms} + \text{Server DB (e.g. } 20\text{ms})$ |
+| **Total Cold Connection Latency** | | **4 RTT** | **$\approx 620\text{ ms}$!** |
 
 ### 💡 Why System Architects Care:
-- More than $80\%$ of cold request time is **pure networking handshake overhead**, not server application processing!
+- More than $90\%$ of cold request time is **pure networking handshake overhead**, not server application processing!
 - **Architectural Optimizations**:
   - **Connection Pooling & HTTP Keep-Alive**: Reuse established TCP+TLS connections so subsequent requests take **0 RTT** handshake latency.
   - **CDNs (Edge Termination)**: Terminate the TCP and TLS handshake at an edge point-of-presence (PoP) in California ($5\text{ms}$ away), then use pre-warmed internal persistent pipes to Frankfurt!
-  - **HTTP/3 (QUIC)**: Merges TCP handshake and TLS 1.3 handshake into a single UDP roundtrip, cutting cold connection latency in half!
+  - **HTTP/3 (QUIC)**: Merges TCP handshake and TLS 1.3 handshake into a single UDP roundtrip, cutting cold connection latency dramatically!
 
 ---
 
 ## 🎯 System Design Interview Questions on This Topic
 
 1. **"What is the difference between a forward proxy, reverse proxy, and DNS Anycast?"**
-2. **"Why does HTTP/1.1 suffer from Head-of-Line (HOL) blocking, and how did HTTP/2 and HTTP/3 solve it?"**
+2. **"Why does DNS primarily use UDP instead of TCP, and when does DNS switch to TCP?"** *(Hint: UDP avoids the 1-RTT TCP handshake for tiny <512-byte lookups, switching to TCP for zone transfers or large DNSSEC responses).*
 3. **"If a customer complains that our API is slow in Australia while our servers are in US-East, what architectural changes would you propose?"**
-4. **"Why do we use UDP for DNS queries instead of TCP?"** *(Hint: UDP requires 0 handshake packets, reducing latency to 1 RTT instead of 2 RTT for simple lookup).*
+4. **"Explain why a cold HTTPS connection over TCP takes 3–4 RTTs, and how TLS 1.3 + Keep-Alive reduces it."**
+
+---
+
+## 📝 Revision To-Do & Suggested Reading Checklist
+
+### 1. Suggested Reading for Revision
+- [ ] **Cheatsheet**: Read [Latency Numbers Every Programmer Should Know](../../cheatsheets/latencies-numbers-every-programmer-should-know.md) to cement the $150\text{ms}$ cross-Atlantic vs $100\text{ns}$ RAM mental model.
+- [ ] **IETF / Standards**: Skim *High Performance Browser Networking* (Ilya Grigorik) — Chapters 1–4 (Primer on Latency, TCP, UDP, and TLS).
+- [ ] **Engineering Deep Dive**: Read Cloudflare's blog *"A Detailed Look at RFC 8446 (TLS 1.3)"* and *"What happens when you type a URL into your browser"*.
+- [ ] **Textbook**: *Designing Data-Intensive Applications* (DDIA) — Chapter 8 (*Unreliable Networks* section) to understand why networks fail and drop packets.
+
+### 2. Historical Intuition Check (Self-Quiz)
+- [ ] Can I explain why **`HOSTS.TXT`** collapsed in 1983 and how Paul Mockapetris's **DNS tree** solved single-server meltdown?
+- [ ] Can I explain why **IP** was left stateless/unreliable and why Cerf & Kahn layered **TCP** on top?
+- [ ] Can I explain why **TLS 1.3** cut handshake latency in half compared to TLS 1.2?
+
+### 3. Interactive Lab Practice (`./simulation.html`)
+- [ ] Run **Cold Start** mode in [./simulation.html](./simulation.html) at `0.6× Slow` and watch the live wire trace as DNS walks `Resolver → Root → TLD → Auth`.
+- [ ] Switch to **Warm Keep-Alive** mode and observe how skipping DNS + TCP + TLS slashes latency from `620ms` down to `170ms`.
+- [ ] Inspect the final **Latency Breakdown Bar** to verify why wire RTT dwarfs backend DB computation (`20ms`).

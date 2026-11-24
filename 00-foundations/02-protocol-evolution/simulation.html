@@ -1,0 +1,1990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protocol Evolution: HTTP/1.1 vs HTTP/2 vs HTTP/3 | Visual Lab</title>
+  
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-page: #f4f6f9;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f8fafc;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+
+      /* Protocol Themes */
+      --h1-color: #d97706;
+      --h1-bg: #fffbeb;
+      --h1-border: #fcd34d;
+
+      --h2-color: #0284c7;
+      --h2-bg: #f0f9ff;
+      --h2-border: #7dd3fc;
+
+      --h3-color: #059669;
+      --h3-bg: #ecfdf5;
+      --h3-border: #6ee7b7;
+
+      --race-color: #4f46e5;
+      --race-bg: #eef2ff;
+      --race-border: #c7d2fe;
+
+      /* Stream Colors */
+      --streamA: #ef4444; /* Heavy SQL PDF */
+      --streamA-bg: #fef2f2;
+      --streamB: #3b82f6; /* Static CSS */
+      --streamB-bg: #eff6ff;
+      --streamC: #10b981; /* Static JS */
+      --streamC-bg: #ecfdf5;
+
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.1);
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header Styling */
+    header {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0284c7, #059669);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 3px 10px rgba(2, 132, 199, 0.3);
+      flex-shrink: 0;
+    }
+
+    .brand-title h1 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .module-badge {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+    }
+
+    .back-link {
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.4rem 0.75rem;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+
+    .back-link:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Main Container */
+    .app-shell {
+      max-width: 1320px;
+      margin: 1.25rem auto 3rem;
+      padding: 0 1.25rem;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* Tabs Bar */
+    .protocol-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.85rem;
+    }
+
+    @media (max-width: 960px) {
+      .protocol-tabs { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 580px) {
+      .protocol-tabs { grid-template-columns: 1fr; }
+    }
+
+    .proto-card {
+      background: var(--bg-surface);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.15rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .proto-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .proto-card.active[data-proto="http1"] {
+      border-color: var(--h1-color);
+      background: var(--h1-bg);
+      box-shadow: 0 0 0 1px var(--h1-color), var(--shadow-md);
+    }
+
+    .proto-card.active[data-proto="http2"] {
+      border-color: var(--h2-color);
+      background: var(--h2-bg);
+      box-shadow: 0 0 0 1px var(--h2-color), var(--shadow-md);
+    }
+
+    .proto-card.active[data-proto="http3"] {
+      border-color: var(--h3-color);
+      background: var(--h3-bg);
+      box-shadow: 0 0 0 1px var(--h3-color), var(--shadow-md);
+    }
+
+    .proto-card.active[data-proto="race"] {
+      border-color: var(--race-color);
+      background: var(--race-bg);
+      box-shadow: 0 0 0 1px var(--race-color), var(--shadow-md);
+    }
+
+    .proto-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      padding: 0.22rem 0.55rem;
+      border-radius: 6px;
+      width: fit-content;
+    }
+
+    .badge-h1 { background: #fef3c7; color: #b45309; }
+    .badge-h2 { background: #e0f2fe; color: #0369a1; }
+    .badge-h3 { background: #d1fae5; color: #047857; }
+    .badge-race { background: #e0e7ff; color: #3730a3; }
+
+    .proto-card h3 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .proto-card p {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Main Stage Card */
+    .stage-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Stage Toolbar Controls */
+    .stage-toolbar {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.48rem 0.95rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
+      background: #fff;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    button:hover {
+      background: var(--bg-subtle);
+      border-color: #94a3b8;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: #0f172a;
+      color: #fff;
+      border-color: #0f172a;
+    }
+
+    .btn-primary:hover {
+      background: #1e293b;
+      color: #fff;
+      border-color: #1e293b;
+    }
+
+    .btn-chaos {
+      background: #fff1f2;
+      color: #be123c;
+      border-color: #fecdd3;
+    }
+
+    .btn-chaos:hover {
+      background: #ffe4e6;
+      border-color: #fda4af;
+    }
+
+    .btn-chaos.active {
+      background: #be123c;
+      color: #fff;
+      border-color: #be123c;
+    }
+
+    .toggle-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-pill input {
+      accent-color: var(--h2-color);
+      cursor: pointer;
+    }
+
+    .segmented {
+      display: inline-flex;
+      background: #e2e8f0;
+      padding: 2px;
+      border-radius: 8px;
+    }
+
+    .segmented button {
+      border: none;
+      background: transparent;
+      padding: 0.3rem 0.65rem;
+      font-size: 0.76rem;
+      border-radius: 6px;
+      color: var(--text-secondary);
+    }
+
+    .segmented button.active {
+      background: #fff;
+      color: var(--text-primary);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .slider-control {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      background: #fff;
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .slider-control input[type="range"] {
+      width: 90px;
+      accent-color: #0f172a;
+      cursor: pointer;
+    }
+
+    /* Blueprint Stage Viewport */
+    .viewport {
+      background: #fcfdff;
+      background-image: radial-gradient(#d8e0eb 1.2px, transparent 1.2px);
+      background-size: 22px 22px;
+      position: relative;
+      min-height: 440px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    svg.stage-svg {
+      width: 100%;
+      height: 420px;
+      overflow: visible;
+    }
+
+    /* Dynamic Packet Hover Cursor */
+    .packet-clickable {
+      cursor: pointer;
+      transition: filter 0.15s;
+    }
+    .packet-clickable:hover {
+      filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.8));
+    }
+
+    /* Waterfall Timeline Panel */
+    .waterfall-panel {
+      padding: 1rem 1.25rem;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .waterfall-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .waterfall-header h4 {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .waterfall-legend {
+      display: flex;
+      gap: 0.85rem;
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .legend-box {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    .waterfall-tracks {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      position: relative;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.65rem 0.85rem;
+      min-height: 105px;
+    }
+
+    .wf-track {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .wf-label {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .wf-bar-container {
+      position: relative;
+      height: 20px;
+      background: #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .wf-segment {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 4px;
+      transition: width 0.05s linear, left 0.05s linear;
+    }
+
+    .wf-segment.hs { background: #a855f7; }
+    .wf-segment.blocked { 
+      background: repeating-linear-gradient(
+        45deg,
+        #f59e0b,
+        #f59e0b 8px,
+        #d97706 8px,
+        #d97706 16px
+      );
+    }
+    .wf-segment.ttfb { background: #cbd5e1; }
+    .wf-segment.downloadA { background: var(--streamA); }
+    .wf-segment.downloadB { background: var(--streamB); }
+    .wf-segment.downloadC { background: var(--streamC); }
+
+    .wf-marker-fcp {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #0284c7;
+      border-right: 1px dashed #7dd3fc;
+      z-index: 5;
+    }
+    .wf-marker-fcp::after {
+      content: "FCP";
+      position: absolute;
+      top: -14px;
+      left: -12px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #0284c7;
+    }
+
+    /* Live HUD Bar */
+    .hud-bar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.75rem;
+      padding: 0.85rem 1.25rem;
+      background: #fff;
+    }
+
+    @media (max-width: 900px) {
+      .hud-bar { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .hud-bar { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .hud-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .hud-stat span {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .hud-stat strong {
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      color: var(--text-primary);
+    }
+
+    /* Event Log Ticker */
+    .log-strip {
+      background: var(--bg-subtle);
+      border-top: 1px solid var(--border);
+      padding: 0.5rem 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .log-strip-tag {
+      background: #0f172a;
+      color: #fff;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.68rem;
+    }
+
+    /* First-Principles Explainer Panel */
+    .explanation-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .explanation-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .explanation-header h4 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .explanation-text {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .pill-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.3rem;
+    }
+
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.22rem 0.6rem;
+      border-radius: 6px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Bar -->
+  <header>
+    <a href="../../index.html" class="brand">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </div>
+      <div class="brand-title">
+        <h1>Protocol Evolution: HOL Blocking Sandbox</h1>
+        <p>Interactive Comparison: HTTP/1.1 vs HTTP/2 vs HTTP/3 (QUIC)</p>
+      </div>
+    </a>
+    <div class="header-right">
+      <span class="module-badge">Module 00.2</span>
+      <a href="./README.md" class="back-link">📖 Theory Notes</a>
+      <a href="../../index.html" class="back-link">← Simulation Hub</a>
+    </div>
+  </header>
+
+  <main class="app-shell">
+
+    <!-- Mode Selector Cards -->
+    <div class="protocol-tabs">
+      <div class="proto-card active" data-proto="http1">
+        <span class="proto-badge badge-h1">HTTP/1.1 (1999)</span>
+        <h3>Persistent Keep-Alive</h3>
+        <p>Single FIFO queue. Responses must arrive in exact request order. Stalled requests cause <strong>Application HOL Blocking</strong>.</p>
+      </div>
+      <div class="proto-card" data-proto="http2">
+        <span class="proto-badge badge-h2">HTTP/2 (2015)</span>
+        <h3>Binary Framing & Multiplexing</h3>
+        <p>Interleaved frames on 1 TCP socket. Eliminates app HOL blocking, but introduces <strong>TCP-Layer HOL Blocking</strong> on packet loss.</p>
+      </div>
+      <div class="proto-card" data-proto="http3">
+        <span class="proto-badge badge-h3">HTTP/3 (2022)</span>
+        <h3>QUIC over UDP</h3>
+        <p>Independent streams on UDP datagrams. Lost packet on Stream A never delays Streams B & C. True 0-RTT resilience.</p>
+      </div>
+      <div class="proto-card" data-proto="race">
+        <span class="proto-badge badge-race">Side-by-Side Race</span>
+        <h3>Concurrent Battle</h3>
+        <p>Run HTTP/1.1, HTTP/2, and HTTP/3 simultaneously under identical network conditions to measure real FCP and total load times.</p>
+      </div>
+    </div>
+
+    <!-- Main Visual Stage Card -->
+    <div class="stage-card">
+
+      <!-- Toolbar & Controls -->
+      <div class="stage-toolbar">
+        <div class="control-group">
+          <button class="btn-primary" id="btnDispatch">▶ Dispatch Requests</button>
+          <button id="btnPause">⏸ Pause</button>
+          <button id="btnReset">🔄 Reset</button>
+          <button class="btn-chaos" id="btnChaos">💥 Arm Packet Loss (Stream A)</button>
+        </div>
+
+        <div class="control-group">
+          <label class="toggle-pill">
+            <input type="checkbox" id="chkHandshake" checked>
+            <span>🤝 Include Handshake</span>
+          </label>
+
+          <div class="slider-control">
+            <span>RTT:</span>
+            <input type="range" id="rngRtt" min="20" max="200" value="60" step="10">
+            <span id="txtRttVal">60ms</span>
+          </div>
+
+          <!-- Speed Multiplier -->
+          <div class="segmented" id="speedControls">
+            <button data-speed="0.25">0.25x</button>
+            <button data-speed="0.5" class="active">0.5x</button>
+            <button data-speed="1.0">1.0x</button>
+            <button data-speed="2.0">2.0x</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Viewport Stage SVG -->
+      <div class="viewport" id="viewport">
+        <svg id="stageSvg" class="stage-svg" viewBox="0 0 1150 420">
+          <defs>
+            <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.08" flood-color="#0f172a" />
+            </filter>
+            <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="20" x2="20" y2="0" stroke="#e2e8f0" stroke-width="1.2" />
+            </pattern>
+          </defs>
+
+          <!-- SVG Group Containers populated dynamically by JavaScript -->
+          <g id="grpPipes"></g>
+          <g id="grpClient"></g>
+          <g id="grpServer"></g>
+          <g id="grpPackets"></g>
+          <g id="grpOverlay"></g>
+        </svg>
+      </div>
+
+      <!-- Synchronized Chrome DevTools-style Waterfall -->
+      <div class="waterfall-panel">
+        <div class="waterfall-header">
+          <h4>📊 Real-time Network Waterfall & Rendering Timeline</h4>
+          <div class="waterfall-legend">
+            <div class="legend-item"><div class="legend-box" style="background: #a855f7;"></div> Handshake</div>
+            <div class="legend-item"><div class="legend-box" style="background: #f59e0b;"></div> HOL Blocked</div>
+            <div class="legend-item"><div class="legend-box" style="background: #cbd5e1;"></div> Server TTFB</div>
+            <div class="legend-item"><div class="legend-box" style="background: var(--streamA);"></div> Stream A</div>
+            <div class="legend-item"><div class="legend-box" style="background: var(--streamB);"></div> Stream B</div>
+            <div class="legend-item"><div class="legend-box" style="background: var(--streamC);"></div> Stream C</div>
+          </div>
+        </div>
+
+        <div class="waterfall-tracks" id="waterfallTracks">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Live Telemetry HUD -->
+      <div class="hud-bar">
+        <div class="hud-stat">
+          <span>Active Protocol</span>
+          <strong id="hudProto">HTTP/1.1</strong>
+        </div>
+        <div class="hud-stat">
+          <span>Handshake RTTs</span>
+          <strong id="hudHandshake">2 RTTs (TCP+TLS)</strong>
+        </div>
+        <div class="hud-stat">
+          <span>First Contentful Paint (FCP)</span>
+          <strong id="hudFcp" style="color: var(--h2-color);">0 ms</strong>
+        </div>
+        <div class="hud-stat">
+          <span>HOL Blocking Delay</span>
+          <strong id="hudHol" style="color: var(--streamA);">0 ms</strong>
+        </div>
+        <div class="hud-stat">
+          <span>Total Page Load</span>
+          <strong id="hudTotal">0 ms</strong>
+        </div>
+      </div>
+
+      <!-- Event Stream Log -->
+      <div class="log-strip" id="logStrip">
+        <span class="log-strip-tag">LIVE EVENT LOG</span>
+        <span id="txtLogEvent">Ready to dispatch requests. Click 'Dispatch Requests' to begin simulation.</span>
+      </div>
+
+    </div>
+
+    <!-- First-Principles Explainer Card -->
+    <div class="explanation-panel">
+      <div class="explanation-header">
+        <span style="font-size: 1.2rem;">💡</span>
+        <h4 id="explanationTitle">HTTP/1.1: The Application Head-of-Line Bottleneck</h4>
+      </div>
+      <p class="explanation-text" id="explanationText">
+        In HTTP/1.1, responses cannot be tagged with stream IDs. The server is strictly bound to send data back in the exact order requested. Because Stream A (report.pdf) takes 900ms SQL execution time, Stream B (style.css) and Stream C (app.js) finish in server memory in 30-40ms but are completely trapped behind Stream A!
+      </p>
+      <div class="pill-tags" id="explanationTags">
+        <span class="tag">RFC 2616</span>
+        <span class="tag">FIFO Queue</span>
+        <span class="tag">Application HOL Blocking</span>
+        <span class="tag">Browser 6-Connection Limit</span>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // ==========================================
+    // PROTOCOL METADATA & CONFIGURATIONS
+    // ==========================================
+    const PROTO_META = {
+      http1: {
+        name: "HTTP/1.1 (Keep-Alive)",
+        title: "HTTP/1.1: The Application Head-of-Line Bottleneck",
+        text: "In HTTP/1.1, responses cannot be tagged with stream IDs. The server is strictly bound to send data back in the exact order requested. Because Stream A (report.pdf) takes 900ms SQL execution time, Stream B (style.css) and Stream C (app.js) finish in server memory in 30-40ms but are completely trapped sitting in the Client FIFO queue behind Stream A!",
+        tags: ["RFC 2616", "FIFO Queue", "Application HOL Blocking", "Sequential Pipe"],
+        handshakeText: "2 RTTs (TCP 1 RTT + TLS 1.3 1 RTT)"
+      },
+      http2: {
+        name: "HTTP/2 (Binary Framing)",
+        title: "HTTP/2: Stream Multiplexing & The Hidden TCP Trap",
+        text: "HTTP/2 breaks requests into binary frames tagged with a 31-bit Stream ID. Streams A, B, and C interleave freely down one TCP socket! But here is the critical flaw: TCP guarantees contiguous byte delivery. Click 'Arm Packet Loss' to see how 1 lost packet on Stream A freezes ALL streams at the OS Kernel TCP Reorder Buffer!",
+        tags: ["RFC 7540", "Binary Framing", "Stream Multiplexing", "TCP-Layer HOL Blocking"],
+        handshakeText: "2 RTTs (TCP 1 RTT + TLS 1.3 1 RTT)"
+      },
+      http3: {
+        name: "HTTP/3 (QUIC over UDP)",
+        title: "HTTP/3: QUIC over UDP — True Stream Independence",
+        text: "HTTP/3 discards TCP and runs over UDP datagrams using QUIC. Streams are completely independent: if Stream A loses a packet, only Stream A's buffer waits for retransmission. Stream B (CSS) and Stream C (JS) deliver to the Browser Renderer without a single microsecond of delay!",
+        tags: ["RFC 9000", "QUIC Transport", "UDP Datagrams", "Zero HOL Blocking", "1-RTT Handshake"],
+        handshakeText: "1 RTT (Combined QUIC + TLS 1.3)"
+      },
+      race: {
+        name: "Side-by-Side Protocol Battle",
+        title: "Side-by-Side Race: Real-World Performance Comparison",
+        text: "Watch HTTP/1.1, HTTP/2, and HTTP/3 run concurrently under identical network latency and packet loss settings. Observe how QUIC achieves First Contentful Paint (FCP) and total page load drastically faster than legacy TCP protocols under packet loss.",
+        tags: ["Benchmark", "FCP Battle", "Network Resilience", "Real-time Metrics"],
+        handshakeText: "Mixed Protocol Handshakes"
+      }
+    };
+
+    // ==========================================
+    // SIMULATION STATE ENGINE
+    // ==========================================
+    let currentProto = "http1";
+    let isRunning = false;
+    let isPaused = false;
+    let speedMultiplier = 0.5;
+    let baseRtt = 60; // ms
+    let handshakeEnabled = true;
+    let packetLossArmed = false;
+
+    let simTime = 0; // Virtual Sim Time in ms
+    let lastTime = 0;
+    let runId = 0; // Unique token to cancel old runs
+
+    // Packets & Particles
+    let packets = [];
+    let particles = [];
+    let logHistory = [];
+
+    // Protocol Specific Tracker State
+    let simState = null;
+
+    // DOM Elements
+    const stageSvg = document.getElementById("stageSvg");
+    const grpPipes = document.getElementById("grpPipes");
+    const grpClient = document.getElementById("grpClient");
+    const grpServer = document.getElementById("grpServer");
+    const grpPackets = document.getElementById("grpPackets");
+    const grpOverlay = document.getElementById("grpOverlay");
+
+    const btnDispatch = document.getElementById("btnDispatch");
+    const btnPause = document.getElementById("btnPause");
+    const btnReset = document.getElementById("btnReset");
+    const btnChaos = document.getElementById("btnChaos");
+    const chkHandshake = document.getElementById("chkHandshake");
+    const rngRtt = document.getElementById("rngRtt");
+    const txtRttVal = document.getElementById("txtRttVal");
+    const speedButtons = document.querySelectorAll("#speedControls button");
+    const protoCards = document.querySelectorAll(".proto-card");
+
+    const hudProto = document.getElementById("hudProto");
+    const hudHandshake = document.getElementById("hudHandshake");
+    const hudFcp = document.getElementById("hudFcp");
+    const hudHol = document.getElementById("hudHol");
+    const hudTotal = document.getElementById("hudTotal");
+    const txtLogEvent = document.getElementById("txtLogEvent");
+
+    const explanationTitle = document.getElementById("explanationTitle");
+    const explanationText = document.getElementById("explanationText");
+    const explanationTags = document.getElementById("explanationTags");
+    const waterfallTracks = document.getElementById("waterfallTracks");
+
+    // Helper SVG creation
+    function createSvgElem(type, attrs) {
+      const elem = document.createElementNS("http://www.w3.org/2000/svg", type);
+      for (let k in attrs) {
+        elem.setAttribute(k, attrs[k]);
+      }
+      return elem;
+    }
+
+    // ==========================================
+    // INITIALIZATION & TAB SWITCHING
+    // ==========================================
+    protoCards.forEach(card => {
+      card.addEventListener("click", () => {
+        protoCards.forEach(c => c.classList.remove("active"));
+        card.classList.add("active");
+        currentProto = card.dataset.proto;
+        resetSimulation();
+      });
+    });
+
+    speedButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        speedButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        speedMultiplier = parseFloat(btn.dataset.speed);
+      });
+    });
+
+    rngRtt.addEventListener("input", (e) => {
+      baseRtt = parseInt(e.target.value);
+      txtRttVal.innerText = `${baseRtt}ms`;
+    });
+
+    chkHandshake.addEventListener("change", (e) => {
+      handshakeEnabled = e.target.checked;
+      resetSimulation();
+    });
+
+    btnChaos.addEventListener("click", () => {
+      packetLossArmed = !packetLossArmed;
+      btnChaos.classList.toggle("active", packetLossArmed);
+      btnChaos.innerText = packetLossArmed ? "💥 Packet Loss: ARMED (Stream A)" : "💥 Arm Packet Loss (Stream A)";
+    });
+
+    btnReset.addEventListener("click", () => resetSimulation());
+    btnPause.addEventListener("click", () => {
+      if (!isRunning) return;
+      isPaused = !isPaused;
+      btnPause.innerText = isPaused ? "▶ Resume" : "⏸ Pause";
+    });
+
+    btnDispatch.addEventListener("click", () => {
+      if (isRunning) return;
+      startSimulation();
+    });
+
+    // ==========================================
+    // RESET & STATE INITIALIZATION
+    // ==========================================
+    function resetSimulation() {
+      runId++;
+      isRunning = false;
+      isPaused = false;
+      simTime = 0;
+      packets = [];
+      particles = [];
+      btnPause.innerText = "⏸ Pause";
+
+      updateMetadataUI();
+      initProtocolState();
+      renderStaticStage();
+      updateTelemetryUI();
+      renderWaterfallUI();
+      logEvent("Simulation reset. Ready to dispatch requests.");
+    }
+
+    function updateMetadataUI() {
+      const meta = PROTO_META[currentProto];
+      hudProto.innerText = meta.name;
+      hudHandshake.innerText = handshakeEnabled ? meta.handshakeText : "0 RTT (Session Resumed)";
+      explanationTitle.innerText = meta.title;
+      explanationText.innerText = meta.text;
+      explanationTags.innerHTML = meta.tags.map(t => `<span class="tag">${t}</span>`).join("");
+    }
+
+    function logEvent(msg) {
+      const timeStr = `[${Math.round(simTime)}ms]`;
+      txtLogEvent.innerText = `${timeStr} ${msg}`;
+    }
+
+    // Initialize State Object based on Protocol Mode
+    function initProtocolState() {
+      if (currentProto === "race") {
+        simState = {
+          h1: createSingleProtoState("http1"),
+          h2: createSingleProtoState("http2"),
+          h3: createSingleProtoState("http3"),
+          finishedCount: 0
+        };
+      } else {
+        simState = createSingleProtoState(currentProto);
+      }
+    }
+
+    function createSingleProtoState(proto) {
+      return {
+        proto: proto,
+        phase: 'IDLE', // IDLE, HANDSHAKE, PROCESSING, COMPLETE
+        handshakeProgress: 0,
+        handshakeDone: !handshakeEnabled,
+        // Workers execution state
+        workers: {
+          A: { label: "SQL Query (PDF)", totalMs: 900, elapsed: 0, done: false, chunksSent: 0, totalChunks: 4, color: "var(--streamA)" },
+          B: { label: "Static CSS", totalMs: 40, elapsed: 0, done: false, chunksSent: 0, totalChunks: 2, color: "var(--streamB)" },
+          C: { label: "Static JS", totalMs: 30, elapsed: 0, done: false, chunksSent: 0, totalChunks: 2, color: "var(--streamC)" }
+        },
+        // Client side received chunks
+        client: {
+          cssReceived: false,
+          jsReceived: false,
+          pdfReceived: false,
+          fcpTime: 0,
+          totalTime: 0,
+          holDelay: 0,
+          kernelBuffer: [], // For HTTP/2 TCP Reorder buffer
+          kernelLocked: false,
+          quicBuffers: { A: [], B: [], C: [] } // For HTTP/3
+        },
+        // Request Queue / State
+        h1CurrentReq: null, // 'A', 'B', 'C'
+        h1Queue: ['A', 'B', 'C'],
+        packetSeqCounter: 1,
+        lossOccurredA: false,
+        retxPendingA: false,
+        retxTimerA: 0
+      };
+    }
+
+    // ==========================================
+    // SVG STAGE RENDERING (CLIENT / PIPES / SERVER)
+    // ==========================================
+    function renderStaticStage() {
+      grpPipes.innerHTML = "";
+      grpClient.innerHTML = "";
+      grpServer.innerHTML = "";
+      grpPackets.innerHTML = "";
+      grpOverlay.innerHTML = "";
+
+      if (currentProto === "race") {
+        renderRaceStage();
+      } else {
+        renderSingleStage();
+      }
+    }
+
+    function renderSingleStage() {
+      // 1. Client Card (Left: X=30, Y=40, W=220, H=340)
+      const clientG = createSvgElem("g", { transform: "translate(30, 40)", filter: "url(#shadow)" });
+      clientG.innerHTML = `
+        <rect width="220" height="340" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+        <rect width="220" height="42" rx="14" fill="#f8fafc" />
+        <line x1="0" y1="42" x2="220" y2="42" stroke="#e2e8f0" stroke-width="1.2" />
+        <text x="16" y="26" font-family="Inter" font-weight="800" font-size="12" fill="#0f172a">💻 BROWSER CLIENT</text>
+        
+        <!-- Live Mini Browser Preview -->
+        <g transform="translate(16, 54)">
+          <rect width="188" height="110" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.2" id="miniWebFrame" />
+          <text x="94" y="60" font-family="JetBrains Mono" font-size="10" fill="#94a3b8" text-anchor="middle" id="miniWebTxt">
+            Wireframe (Blank)
+          </text>
+          <!-- Styled element box (CSS) -->
+          <rect id="miniStyleBar" x="12" y="12" width="164" height="14" rx="4" fill="#e2e8f0" />
+          <!-- Interactive JS badge -->
+          <rect id="miniJsBadge" x="12" y="34" width="70" height="16" rx="4" fill="#e2e8f0" />
+          <text id="miniJsTxt" x="47" y="45" font-family="JetBrains Mono" font-size="8" fill="#94a3b8" text-anchor="middle">No JS</text>
+          <!-- PDF Card (A) -->
+          <rect id="miniPdfCard" x="12" y="58" width="164" height="40" rx="6" fill="#e2e8f0" opacity="0.5" />
+          <text id="miniPdfTxt" x="94" y="82" font-family="Inter" font-size="9" font-weight="600" fill="#94a3b8" text-anchor="middle">report.pdf (Pending)</text>
+        </g>
+
+        <!-- Kernel / Transport Receive Buffer Container -->
+        <g transform="translate(16, 178)" id="grpClientBuffer">
+          <!-- Rendered dynamically depending on H1/H2 vs H3 -->
+        </g>
+      `;
+      grpClient.appendChild(clientG);
+
+      // 2. Middle Network Pipe (X=270, Y=40, W=610, H=340)
+      const pipeG = createSvgElem("g", { transform: "translate(270, 40)" });
+
+      if (currentProto === "http1") {
+        pipeG.innerHTML = `
+          <rect x="0" y="110" width="610" height="120" rx="14" fill="#ffffff" stroke="#d97706" stroke-width="2" />
+          <rect x="0" y="110" width="610" height="120" rx="14" fill="url(#gridPattern)" opacity="0.4" />
+          <text x="305" y="132" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#b45309" text-anchor="middle">
+            SINGLE TCP PIPE (Strict Serialized FIFO Queue)
+          </text>
+          <line x1="20" y1="170" x2="590" y2="170" stroke="#fcd34d" stroke-dasharray="6,6" stroke-width="1.5" />
+          <text x="305" y="195" font-family="JetBrains Mono" font-size="10" fill="#d97706" text-anchor="middle">
+            Responses must be returned in exact request order (A -> B -> C)
+          </text>
+        `;
+      } else if (currentProto === "http2") {
+        pipeG.innerHTML = `
+          <rect x="0" y="50" width="610" height="240" rx="16" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+          <rect x="0" y="50" width="610" height="240" rx="16" fill="#f0f9ff" opacity="0.5" />
+          <text x="305" y="75" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#0369a1" text-anchor="middle">
+            SINGLE TCP SOCKET PIPE (Multiplexed Binary Frames: Streams 1, 3, 5)
+          </text>
+          <line x1="20" y1="130" x2="590" y2="130" stroke="#7dd3fc" stroke-dasharray="5,5" />
+          <line x1="20" y1="210" x2="590" y2="210" stroke="#7dd3fc" stroke-dasharray="5,5" />
+          <text x="30" y="115" font-family="JetBrains Mono" font-size="9" fill="#0284c7">Stream 1: report.pdf</text>
+          <text x="30" y="195" font-family="JetBrains Mono" font-size="9" fill="#0284c7">Stream 3: style.css</text>
+          <text x="30" y="270" font-family="JetBrains Mono" font-size="9" fill="#0284c7">Stream 5: app.js</text>
+        `;
+      } else if (currentProto === "http3") {
+        pipeG.innerHTML = `
+          <!-- Lane 1 (Stream A) -->
+          <rect x="0" y="40" width="610" height="70" rx="12" fill="#ffffff" stroke="#059669" stroke-width="1.8" />
+          <rect x="0" y="40" width="610" height="70" rx="12" fill="#ecfdf5" opacity="0.4" />
+          <text x="20" y="62" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#047857">QUIC Stream 0 (UDP) - report.pdf</text>
+
+          <!-- Lane 2 (Stream B) -->
+          <rect x="0" y="135" width="610" height="70" rx="12" fill="#ffffff" stroke="#059669" stroke-width="1.8" />
+          <rect x="0" y="135" width="610" height="70" rx="12" fill="#ecfdf5" opacity="0.4" />
+          <text x="20" y="157" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#047857">QUIC Stream 4 (UDP) - style.css</text>
+
+          <!-- Lane 3 (Stream C) -->
+          <rect x="0" y="230" width="610" height="70" rx="12" fill="#ffffff" stroke="#059669" stroke-width="1.8" />
+          <rect x="0" y="230" width="610" height="70" rx="12" fill="#ecfdf5" opacity="0.4" />
+          <text x="20" y="252" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#047857">QUIC Stream 8 (UDP) - app.js</text>
+        `;
+      }
+      grpPipes.appendChild(pipeG);
+
+      // 3. Server Card (Right: X=900, Y=40, W=220, H=340)
+      const serverG = createSvgElem("g", { transform: "translate(900, 40)", filter: "url(#shadow)" });
+      serverG.innerHTML = `
+        <rect width="220" height="340" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+        <rect width="220" height="42" rx="14" fill="#f8fafc" />
+        <line x1="0" y1="42" x2="220" y2="42" stroke="#e2e8f0" stroke-width="1.2" />
+        <text x="16" y="26" font-family="Inter" font-weight="800" font-size="12" fill="#0f172a">🏢 API SERVER WORKERS</text>
+
+        <!-- Worker A -->
+        <g transform="translate(16, 56)">
+          <rect width="188" height="75" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+          <text x="12" y="22" font-family="Inter" font-weight="700" font-size="11" fill="#991b1b">Worker A (SQL Query)</text>
+          <text x="12" y="38" font-family="JetBrains Mono" font-size="9" fill="#ef4444">Heavy PDF Report (900ms)</text>
+          <rect x="12" y="48" width="164" height="12" rx="4" fill="#e2e8f0" />
+          <rect id="srvBarA" x="12" y="48" width="0" height="12" rx="4" fill="var(--streamA)" />
+        </g>
+
+        <!-- Worker B -->
+        <g transform="translate(16, 145)">
+          <rect width="188" height="75" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+          <text x="12" y="22" font-family="Inter" font-weight="700" font-size="11" fill="#1e40af">Worker B (Static CSS)</text>
+          <text x="12" y="38" font-family="JetBrains Mono" font-size="9" fill="#3b82f6">Memory Cache (40ms)</text>
+          <rect x="12" y="48" width="164" height="12" rx="4" fill="#e2e8f0" />
+          <rect id="srvBarB" x="12" y="48" width="0" height="12" rx="4" fill="var(--streamB)" />
+        </g>
+
+        <!-- Worker C -->
+        <g transform="translate(16, 234)">
+          <rect width="188" height="75" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+          <text x="12" y="22" font-family="Inter" font-weight="700" font-size="11" fill="#065f46">Worker C (Static JS)</text>
+          <text x="12" y="38" font-family="JetBrains Mono" font-size="9" fill="#10b981">Memory Cache (30ms)</text>
+          <rect x="12" y="48" width="164" height="12" rx="4" fill="#e2e8f0" />
+          <rect id="srvBarC" x="12" y="48" width="0" height="12" rx="4" fill="var(--streamC)" />
+        </g>
+      `;
+      grpServer.appendChild(serverG);
+
+      renderDynamicClientBuffers();
+    }
+
+    // Dynamic Render for Client Buffer Box (OS Kernel TCP Reorder Buffer vs QUIC Stream Buffers)
+    function renderDynamicClientBuffers() {
+      const bufferContainer = document.getElementById("grpClientBuffer");
+      if (!bufferContainer) return;
+
+      if (currentProto === "http1" || currentProto === "http2") {
+        bufferContainer.innerHTML = `
+          <rect width="188" height="145" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2" id="boxKernelBuffer" />
+          <text x="12" y="20" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#475569" id="txtKernelTitle">
+            OS Kernel TCP Buffer
+          </text>
+          
+          <g transform="translate(10, 30)" id="grpKernelLock" opacity="0">
+            <rect width="168" height="28" rx="6" fill="#fef2f2" stroke="#fecaca" stroke-width="1" />
+            <text x="84" y="18" font-family="JetBrains Mono" font-weight="700" font-size="9" fill="#991b1b" text-anchor="middle">
+              🔒 KERNEL LOCKED (HOL Block)
+            </text>
+          </g>
+
+          <g transform="translate(10, 65)">
+            <text x="0" y="10" font-family="JetBrains Mono" font-size="9" fill="#64748b">Rx Segment Queue:</text>
+            <g id="grpKernelItems" transform="translate(0, 16)"></g>
+          </g>
+        `;
+      } else if (currentProto === "http3") {
+        bufferContainer.innerHTML = `
+          <rect width="188" height="145" rx="8" fill="#f8fafc" stroke="#6ee7b7" stroke-width="1.2" />
+          <text x="12" y="20" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#047857">
+            QUIC Stream Buffers
+          </text>
+          
+          <g transform="translate(10, 30)">
+            <rect width="168" height="32" rx="6" fill="#fef2f2" stroke="#fecaca" />
+            <text x="10" y="14" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#991b1b">Stream 0 (A):</text>
+            <text id="txtQuicA" x="10" y="26" font-family="JetBrains Mono" font-size="8" fill="#ef4444">Idle</text>
+          </g>
+
+          <g transform="translate(10, 68)">
+            <rect width="168" height="32" rx="6" fill="#eff6ff" stroke="#bfdbfe" />
+            <text x="10" y="14" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#1e40af">Stream 4 (B):</text>
+            <text id="txtQuicB" x="10" y="26" font-family="JetBrains Mono" font-size="8" fill="#3b82f6">Idle</text>
+          </g>
+
+          <g transform="translate(10, 106)">
+            <rect width="168" height="32" rx="6" fill="#ecfdf5" stroke="#a7f3d0" />
+            <text x="10" y="14" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#065f46">Stream 8 (C):</text>
+            <text id="txtQuicC" x="10" y="26" font-family="JetBrains Mono" font-size="8" fill="#10b981">Idle</text>
+          </g>
+        `;
+      }
+    }
+
+    // Render Side-by-Side Race Viewport
+    function renderRaceStage() {
+      const raceG = createSvgElem("g", { transform: "translate(20, 20)" });
+      raceG.innerHTML = `
+        <!-- Lane 1: HTTP/1.1 -->
+        <g transform="translate(0, 0)">
+          <rect width="1110" height="110" rx="10" fill="#fff" stroke="#d97706" stroke-width="1.5" />
+          <text x="16" y="24" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#b45309">HTTP/1.1 (FIFO Keep-Alive)</text>
+          <text id="raceTimeH1" x="1094" y="24" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#64748b" text-anchor="end">0ms</text>
+          <line x1="200" y1="65" x2="900" y2="65" stroke="#cbd5e1" stroke-dasharray="4,4" />
+          <text x="210" y="55" font-family="JetBrains Mono" font-size="9" fill="#94a3b8">Browser</text>
+          <text x="890" y="55" font-family="JetBrains Mono" font-size="9" fill="#94a3b8" text-anchor="end">Server</text>
+          <g id="raceClientH1" transform="translate(16, 38)"></g>
+          <g id="raceMedalH1" transform="translate(1000, 45)"></g>
+        </g>
+
+        <!-- Lane 2: HTTP/2 -->
+        <g transform="translate(0, 130)">
+          <rect width="1110" height="110" rx="10" fill="#fff" stroke="#0284c7" stroke-width="1.5" />
+          <text x="16" y="24" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#0369a1">HTTP/2 (Multiplexed TCP)</text>
+          <text id="raceTimeH2" x="1094" y="24" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#64748b" text-anchor="end">0ms</text>
+          <line x1="200" y1="65" x2="900" y2="65" stroke="#7dd3fc" stroke-dasharray="4,4" />
+          <text x="210" y="55" font-family="JetBrains Mono" font-size="9" fill="#94a3b8">Browser</text>
+          <text x="890" y="55" font-family="JetBrains Mono" font-size="9" fill="#94a3b8" text-anchor="end">Server</text>
+          <g id="raceClientH2" transform="translate(16, 38)"></g>
+          <g id="raceMedalH2" transform="translate(1000, 45)"></g>
+        </g>
+
+        <!-- Lane 3: HTTP/3 -->
+        <g transform="translate(0, 260)">
+          <rect width="1110" height="110" rx="10" fill="#fff" stroke="#059669" stroke-width="1.5" />
+          <text x="16" y="24" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#047857">HTTP/3 (QUIC / UDP)</text>
+          <text id="raceTimeH3" x="1094" y="24" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#64748b" text-anchor="end">0ms</text>
+          <line x1="200" y1="65" x2="900" y2="65" stroke="#6ee7b7" stroke-dasharray="4,4" />
+          <text x="210" y="55" font-family="JetBrains Mono" font-size="9" fill="#94a3b8">Browser</text>
+          <text x="890" y="55" font-family="JetBrains Mono" font-size="9" fill="#94a3b8" text-anchor="end">Server</text>
+          <g id="raceClientH3" transform="translate(16, 38)"></g>
+          <g id="raceMedalH3" transform="translate(1000, 45)"></g>
+        </g>
+      `;
+      grpPipes.appendChild(raceG);
+    }
+
+    // ==========================================
+    // MAIN DISPATCH & SIMULATION LOOP
+    // ==========================================
+    function startSimulation() {
+      resetSimulation();
+      isRunning = true;
+      lastTime = performance.now();
+      const currentRunToken = runId;
+
+      logEvent(`Dispatching requests under ${PROTO_META[currentProto].name}...`);
+
+      if (currentProto === "race") {
+        startRaceProtocol();
+      } else {
+        startSingleProtocol(simState);
+      }
+
+      requestAnimationFrame((now) => animLoop(now, currentRunToken));
+    }
+
+    function startSingleProtocol(st) {
+      if (handshakeEnabled) {
+        st.phase = 'HANDSHAKE';
+        st.handshakeProgress = 0;
+        // Launch TCP SYN packet
+        spawnPacket({
+          label: st.proto === 'http3' ? "QUIC CHLO" : "TCP SYN",
+          color: "#a855f7",
+          startX: 270, startY: getLaneY(st.proto, 'HS'),
+          endX: 890, endY: getLaneY(st.proto, 'HS'),
+          durationMs: baseRtt / 2,
+          onComplete: () => onHandshakeSynReceived(st)
+        });
+      } else {
+        st.phase = 'PROCESSING';
+        st.handshakeDone = true;
+        dispatchClientRequests(st);
+      }
+    }
+
+    function startRaceProtocol() {
+      startSingleProtocol(simState.h1);
+      startSingleProtocol(simState.h2);
+      startSingleProtocol(simState.h3);
+    }
+
+    function getLaneY(proto, type) {
+      if (currentProto === "race") {
+        if (proto === 'http1') return 85;
+        if (proto === 'http2') return 215;
+        if (proto === 'http3') return 345;
+      }
+      // Single Mode Y Coordinates
+      if (proto === 'http1') return 210;
+      if (proto === 'http2') {
+        if (type === 'A') return 150;
+        if (type === 'B') return 230;
+        if (type === 'C') return 290;
+        return 210;
+      }
+      if (proto === 'http3') {
+        if (type === 'A') return 115;
+        if (type === 'B') return 210;
+        if (type === 'C') return 305;
+        return 210;
+      }
+      return 210;
+    }
+
+    // Handshake Callback Handlers
+    function onHandshakeSynReceived(st) {
+      // Server returns SYN-ACK / SHLO
+      spawnPacket({
+        label: st.proto === 'http3' ? "QUIC SHLO" : "TCP SYN-ACK",
+        color: "#a855f7",
+        startX: 890, startY: getLaneY(st.proto, 'HS'),
+        endX: 270, endY: getLaneY(st.proto, 'HS'),
+        durationMs: baseRtt / 2,
+        onComplete: () => {
+          if (st.proto === 'http3') {
+            // QUIC 1-RTT Complete!
+            st.handshakeDone = true;
+            st.phase = 'PROCESSING';
+            logEvent(`HTTP/3 1-RTT Handshake Complete (${baseRtt}ms). Dispatching Streams!`);
+            dispatchClientRequests(st);
+          } else {
+            // TCP 1st RTT done, send TLS 1.3 ClientHello (2nd RTT)
+            spawnPacket({
+              label: "TLS ClientHello",
+              color: "#c084fc",
+              startX: 270, startY: getLaneY(st.proto, 'HS'),
+              endX: 890, endY: getLaneY(st.proto, 'HS'),
+              durationMs: baseRtt / 2,
+              onComplete: () => {
+                spawnPacket({
+                  label: "TLS ServerHello",
+                  color: "#c084fc",
+                  startX: 890, startY: getLaneY(st.proto, 'HS'),
+                  endX: 270, endY: getLaneY(st.proto, 'HS'),
+                  durationMs: baseRtt / 2,
+                  onComplete: () => {
+                    st.handshakeDone = true;
+                    st.phase = 'PROCESSING';
+                    logEvent(`${st.proto.toUpperCase()} 2-RTT TCP+TLS Handshake Complete (${baseRtt*2}ms). Dispatching Requests!`);
+                    dispatchClientRequests(st);
+                  }
+                });
+              }
+            });
+          }
+        }
+      });
+    }
+
+    // Dispatch Initial Requests from Client -> Server
+    function dispatchClientRequests(st) {
+      if (st.proto === 'http1') {
+        // H1 FIFO: Send Request A first
+        st.h1CurrentReq = 'A';
+        logEvent("HTTP/1.1: Dispatching GET /report.pdf (Stream A)");
+        spawnPacket({
+          label: "GET /report",
+          color: "var(--streamA)",
+          startX: 270, startY: getLaneY(st.proto, 'A'),
+          endX: 890, endY: getLaneY(st.proto, 'A'),
+          durationMs: baseRtt / 2,
+          onComplete: () => {
+            logEvent("HTTP/1.1 Server Worker A started (SQL 900ms query)... Streams B & C QUEUED.");
+          }
+        });
+      } else if (st.proto === 'http2' || st.proto === 'http3') {
+        // H2 & H3 Multiplexed: Dispatch ALL 3 Requests simultaneously!
+        logEvent(`${st.proto.toUpperCase()}: Dispatching GET /report, /style, /app simultaneously!`);
+
+        ['A', 'B', 'C'].forEach(streamKey => {
+          spawnPacket({
+            label: `GET /${streamKey === 'A' ? 'report' : streamKey === 'B' ? 'style' : 'app'}`,
+            color: streamKey === 'A' ? "var(--streamA)" : streamKey === 'B' ? "var(--streamB)" : "var(--streamC)",
+            startX: 270, startY: getLaneY(st.proto, streamKey),
+            endX: 890, endY: getLaneY(st.proto, streamKey),
+            durationMs: baseRtt / 2,
+            onComplete: () => {
+              // Server receives request and starts workers
+            }
+          });
+        });
+      }
+    }
+
+    // ==========================================
+    // DELTA-TIME ANIMATION & TICK ENGINE
+    // ==========================================
+    function animLoop(now, token) {
+      if (!isRunning || token !== runId) return;
+
+      const dt = Math.min(50, now - lastTime) * speedMultiplier;
+      lastTime = now;
+
+      if (!isPaused) {
+        simTime += dt;
+        if (currentProto === "race") {
+          tickSingleState(simState.h1, dt);
+          tickSingleState(simState.h2, dt);
+          tickSingleState(simState.h3, dt);
+        } else {
+          tickSingleState(simState, dt);
+        }
+        updatePackets(dt);
+        updateParticles(dt);
+      }
+
+      renderDynamicOverlay();
+      updateTelemetryUI();
+      renderWaterfallUI();
+
+      requestAnimationFrame((newNow) => animLoop(newNow, token));
+    }
+
+    // Tick Logic per protocol state instance
+    function tickSingleState(st, dt) {
+      if (st.phase !== 'PROCESSING') return;
+
+      // H1.1 Sequential Server Execution Tick
+      if (st.proto === 'http1') {
+        tickH1Workers(st, dt);
+      } else {
+        // H2 / H3 Concurrent Workers Execution Tick
+        tickConcurrentWorkers(st, dt);
+      }
+
+      // Check for Retransmission Timers (if Packet Loss occurred)
+      if (st.retxPendingA) {
+        st.retxTimerA -= dt;
+        if (st.retxTimerA <= 0) {
+          st.retxPendingA = false;
+          logEvent(`💥 RETX TIMEOUT! Server retransmitting packet A1 (${st.proto.toUpperCase()}).`);
+          sendDataChunk(st, 'A', 1, true);
+        }
+      }
+
+      // Check if all Streams complete
+      if (st.client.cssReceived && st.client.jsReceived && st.client.pdfReceived && st.phase !== 'COMPLETE') {
+        st.phase = 'COMPLETE';
+        st.client.totalTime = simTime;
+        logEvent(`🎉 ${st.proto.toUpperCase()} COMPLETE! Total Page Load: ${Math.round(simTime)}ms`);
+
+        if (currentProto === "race") {
+          simState.finishedCount++;
+          assignRaceMedal(st, simState.finishedCount);
+        }
+      }
+    }
+
+    // HTTP/1.1 Worker Execution Logic (Strict Sequential FIFO)
+    function tickH1Workers(st, dt) {
+      const wA = st.workers.A;
+      const wB = st.workers.B;
+      const wC = st.workers.C;
+
+      if (st.h1CurrentReq === 'A') {
+        if (!wA.done) {
+          wA.elapsed += dt;
+          if (wA.elapsed >= wA.totalMs) {
+            wA.done = true;
+            // Send Chunks A1..A4 sequentially
+            sendH1Chunks(st, 'A');
+          }
+        }
+      } else if (st.h1CurrentReq === 'B') {
+        if (!wB.done) {
+          wB.elapsed += dt;
+          if (wB.elapsed >= wB.totalMs) {
+            wB.done = true;
+            sendH1Chunks(st, 'B');
+          }
+        }
+      } else if (st.h1CurrentReq === 'C') {
+        if (!wC.done) {
+          wC.elapsed += dt;
+          if (wC.elapsed >= wC.totalMs) {
+            wC.done = true;
+            sendH1Chunks(st, 'C');
+          }
+        }
+      }
+    }
+
+    function sendH1Chunks(st, streamKey) {
+      const w = st.workers[streamKey];
+      for (let i = 1; i <= w.totalChunks; i++) {
+        sendDataChunk(st, streamKey, i, false);
+      }
+    }
+
+    // H2 & H3 Concurrent Worker Execution Logic
+    function tickConcurrentWorkers(st, dt) {
+      ['A', 'B', 'C'].forEach(streamKey => {
+        const w = st.workers[streamKey];
+        if (!w.done) {
+          w.elapsed += dt;
+          if (w.elapsed >= w.totalMs) {
+            w.done = true;
+            // Send chunks as soon as worker completes memory job
+            for (let i = 1; i <= w.totalChunks; i++) {
+              sendDataChunk(st, streamKey, i, false);
+            }
+          }
+        }
+      });
+    }
+
+    // Data Packet Dispatcher
+    function sendDataChunk(st, streamKey, chunkIdx, isRetx) {
+      const packetSeq = isRetx ? "Seq #1 (RETX)" : (st.proto === 'http2' ? `Seq #${st.packetSeqCounter++}` : `Pkt #${chunkIdx}`);
+      const label = `${streamKey}${chunkIdx} ${isRetx ? '(RETX)' : ''}`;
+      const color = streamKey === 'A' ? "var(--streamA)" : streamKey === 'B' ? "var(--streamB)" : "var(--streamC)";
+
+      // Check if this packet should drop (Packet Loss test on Stream A Chunk 1)
+      const shouldDrop = (packetLossArmed || st.lossOccurredA) && streamKey === 'A' && chunkIdx === 1 && !isRetx && !st.lossOccurredA;
+
+      if (shouldDrop) {
+        st.lossOccurredA = true;
+      }
+
+      spawnPacket({
+        label: label,
+        seq: packetSeq,
+        stream: streamKey,
+        chunkIdx: chunkIdx,
+        color: color,
+        proto: st.proto,
+        startX: 890, startY: getLaneY(st.proto, streamKey),
+        endX: 270, endY: getLaneY(st.proto, streamKey),
+        durationMs: baseRtt / 2,
+        isLossTarget: shouldDrop,
+        onDrop: () => {
+          logEvent(`💥 PACKET LOSS: ${label} (${st.proto.toUpperCase()}) exploded in transit!`);
+          st.retxPendingA = true;
+          st.retxTimerA = baseRtt * 2.5; // RTO Timeout
+          if (st.proto === 'http2') {
+            st.client.kernelLocked = true;
+            logEvent(`🔒 TCP HOL BLOCKING: OS Kernel Buffer LOCKED waiting for missing Seq #1!`);
+          }
+        },
+        onComplete: () => {
+          onChunkReceivedAtClient(st, streamKey, chunkIdx, isRetx, label, packetSeq);
+        }
+      });
+    }
+
+    // Client Receiving Packet Logic (Handling Kernel Reorder Buffer & QUIC Buffers)
+    function onChunkReceivedAtClient(st, streamKey, chunkIdx, isRetx, label, seqStr) {
+      if (st.proto === 'http1') {
+        // H1 Sequential Processing
+        if (streamKey === 'A' && chunkIdx === st.workers.A.totalChunks) {
+          st.client.pdfReceived = true;
+          logEvent("HTTP/1.1: Stream A (report.pdf) Received! Dispatching queued Request B (style.css)...");
+          st.h1CurrentReq = 'B';
+          spawnPacket({
+            label: "GET /style", color: "var(--streamB)",
+            startX: 270, startY: getLaneY(st.proto, 'B'), endX: 890, endY: getLaneY(st.proto, 'B'),
+            durationMs: baseRtt / 2
+          });
+        } else if (streamKey === 'B' && chunkIdx === st.workers.B.totalChunks) {
+          st.client.cssReceived = true;
+          st.client.fcpTime = simTime;
+          logEvent("HTTP/1.1: Stream B (style.css) Received! Dispatching queued Request C (app.js)...");
+          st.h1CurrentReq = 'C';
+          spawnPacket({
+            label: "GET /app", color: "var(--streamC)",
+            startX: 270, startY: getLaneY(st.proto, 'C'), endX: 890, endY: getLaneY(st.proto, 'C'),
+            durationMs: baseRtt / 2
+          });
+        } else if (streamKey === 'C' && chunkIdx === st.workers.C.totalChunks) {
+          st.client.jsReceived = true;
+          logEvent("HTTP/1.1: Stream C (app.js) Received!");
+        }
+      }
+
+      else if (st.proto === 'http2') {
+        // H2 TCP Reorder Buffer logic
+        if (st.client.kernelLocked && !isRetx) {
+          // Out-of-order segments arrive while missing Seq #1 -> Stuck in Kernel Reorder Buffer!
+          st.client.kernelBuffer.push({ stream: streamKey, chunk: chunkIdx, label: label, seq: seqStr });
+          st.client.holDelay += 40;
+          logEvent(`⚠️ TCP KERNEL BUFFER: ${label} (${seqStr}) trapped behind missing Seq #1!`);
+        } else {
+          // Unlocked or RETX Arrived!
+          if (isRetx) {
+            st.client.kernelLocked = false;
+            logEvent(`🔓 TCP KERNEL UNLOCKED! Missing Seq #1 arrived. Flushing buffered frames to Renderer!`);
+            // Deliver missing A1
+            processH2ChunkDeliver(st, 'A', 1);
+            // Deliver all buffered chunks
+            st.client.kernelBuffer.forEach(item => {
+              processH2ChunkDeliver(st, item.stream, item.chunk);
+            });
+            st.client.kernelBuffer = [];
+          } else {
+            processH2ChunkDeliver(st, streamKey, chunkIdx);
+          }
+        }
+      }
+
+      else if (st.proto === 'http3') {
+        // H3 QUIC Independent Streams: Zero HOL Blocking for Streams B & C!
+        if (streamKey === 'A') {
+          st.client.quicBuffers.A.push(chunkIdx);
+          if (st.client.quicBuffers.A.length === st.workers.A.totalChunks) {
+            st.client.pdfReceived = true;
+            logEvent("HTTP/3: Stream 0 (report.pdf) Fully Reassembled!");
+          }
+        } else if (streamKey === 'B') {
+          st.client.quicBuffers.B.push(chunkIdx);
+          if (st.client.quicBuffers.B.length === st.workers.B.totalChunks) {
+            st.client.cssReceived = true;
+            if (!st.client.fcpTime) st.client.fcpTime = simTime;
+            logEvent("HTTP/3: Stream 4 (style.css) Received in 0ms HOL delay! Styling painted.");
+          }
+        } else if (streamKey === 'C') {
+          st.client.quicBuffers.C.push(chunkIdx);
+          if (st.client.quicBuffers.C.length === st.workers.C.totalChunks) {
+            st.client.jsReceived = true;
+            logEvent("HTTP/3: Stream 8 (app.js) Received in 0ms HOL delay! JS Hydrated.");
+          }
+        }
+      }
+    }
+
+    function processH2ChunkDeliver(st, streamKey, chunkIdx) {
+      if (streamKey === 'A' && chunkIdx === st.workers.A.totalChunks) st.client.pdfReceived = true;
+      if (streamKey === 'B' && chunkIdx === st.workers.B.totalChunks) {
+        st.client.cssReceived = true;
+        if (!st.client.fcpTime) st.client.fcpTime = simTime;
+      }
+      if (streamKey === 'C' && chunkIdx === st.workers.C.totalChunks) st.client.jsReceived = true;
+    }
+
+    // ==========================================
+    // PACKET & PARTICLE ANIMATION ENGINE
+    // ==========================================
+    function spawnPacket(config) {
+      const pkt = {
+        id: Math.random().toString(36).substr(2, 9),
+        label: config.label,
+        seq: config.seq || "",
+        stream: config.stream || "HS",
+        color: config.color || "#0284c7",
+        proto: config.proto || currentProto,
+        startX: config.startX,
+        startY: config.startY,
+        endX: config.endX,
+        endY: config.endY,
+        x: config.startX,
+        y: config.startY,
+        durationMs: config.durationMs,
+        elapsed: 0,
+        isLossTarget: config.isLossTarget || false,
+        onDrop: config.onDrop,
+        onComplete: config.onComplete,
+        elem: null
+      };
+
+      // Create SVG DOM Element for Packet
+      const g = createSvgElem("g", {
+        class: "packet-clickable",
+        transform: `translate(${pkt.x}, ${pkt.y})`
+      });
+      g.innerHTML = `
+        <rect width="70" height="26" rx="6" fill="${pkt.color}" stroke="#ffffff" stroke-width="1.5" />
+        <text x="35" y="16" font-family="JetBrains Mono" font-weight="700" font-size="9" fill="#ffffff" text-anchor="middle">
+          ${pkt.label}
+        </text>
+      `;
+
+      // Allow direct click-to-drop on in-flight packets
+      g.addEventListener("click", () => dropPacketMidFlight(pkt));
+
+      grpPackets.appendChild(g);
+      pkt.elem = g;
+      packets.push(pkt);
+    }
+
+    function updatePackets(dt) {
+      for (let i = packets.length - 1; i >= 0; i--) {
+        const p = packets[i];
+        p.elapsed += dt;
+        const progress = Math.min(1, p.elapsed / p.durationMs);
+
+        p.x = p.startX + (p.endX - p.startX) * progress;
+        p.y = p.startY + (p.endY - p.startY) * progress;
+
+        if (p.elem) {
+          p.elem.setAttribute("transform", `translate(${p.x - 35}, ${p.y - 13})`);
+        }
+
+        // Trigger loss explosion mid-flight
+        if (p.isLossTarget && progress >= 0.5) {
+          dropPacketMidFlight(p);
+          packets.splice(i, 1);
+          continue;
+        }
+
+        if (progress >= 1) {
+          if (p.elem) p.elem.remove();
+          if (p.onComplete) p.onComplete();
+          packets.splice(i, 1);
+        }
+      }
+    }
+
+    function dropPacketMidFlight(p) {
+      if (p.elem) p.elem.remove();
+      spawnExplosionParticles(p.x, p.y, p.color);
+      if (p.onDrop) p.onDrop();
+    }
+
+    function spawnExplosionParticles(x, y, color) {
+      for (let i = 0; i < 14; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1.5 + Math.random() * 3.5;
+        const pElem = createSvgElem("circle", {
+          cx: x, cy: y, r: 3.5, fill: color
+        });
+        grpOverlay.appendChild(pElem);
+        particles.push({
+          elem: pElem, x: x, y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1.0
+        });
+      }
+    }
+
+    function updateParticles(dt) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const pt = particles[i];
+        pt.life -= dt / 600;
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.elem.setAttribute("cx", pt.x);
+        pt.elem.setAttribute("cy", pt.y);
+        pt.elem.setAttribute("opacity", Math.max(0, pt.life));
+
+        if (pt.life <= 0) {
+          pt.elem.remove();
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    // Assign Medal Badges in Side-by-Side Race Mode
+    function assignRaceMedal(st, rank) {
+      const targetId = st.proto === 'http1' ? 'raceMedalH1' : st.proto === 'http2' ? 'raceMedalH2' : 'raceMedalH3';
+      const medalG = document.getElementById(targetId);
+      if (!medalG) return;
+
+      const medalText = rank === 1 ? "🥇 1st Place" : rank === 2 ? "🥈 2nd Place" : "🥉 3rd Place";
+      const medalColor = rank === 1 ? "#059669" : rank === 2 ? "#0284c7" : "#d97706";
+
+      medalG.innerHTML = `
+        <rect width="90" height="28" rx="6" fill="${medalColor}" />
+        <text x="45" y="18" font-family="Inter" font-weight="700" font-size="10" fill="#fff" text-anchor="middle">
+          ${medalText}
+        </text>
+      `;
+    }
+
+    // ==========================================
+    // DYNAMIC UI OVERLAYS & TELEMETRY
+    // ==========================================
+    function renderDynamicOverlay() {
+      if (currentProto === "race") {
+        updateRaceLaneUI(simState.h1, 'raceTimeH1', 'raceClientH1');
+        updateRaceLaneUI(simState.h2, 'raceTimeH2', 'raceClientH2');
+        updateRaceLaneUI(simState.h3, 'raceTimeH3', 'raceClientH3');
+        return;
+      }
+
+      const st = simState;
+      // 1. Update Server Worker Progress Bars
+      const barA = document.getElementById("srvBarA");
+      const barB = document.getElementById("srvBarB");
+      const barC = document.getElementById("srvBarC");
+
+      if (barA) barA.setAttribute("width", `${Math.min(164, (st.workers.A.elapsed / st.workers.A.totalMs) * 164)}`);
+      if (barB) barB.setAttribute("width", `${Math.min(164, (st.workers.B.elapsed / st.workers.B.totalMs) * 164)}`);
+      if (barC) barC.setAttribute("width", `${Math.min(164, (st.workers.C.elapsed / st.workers.C.totalMs) * 164)}`);
+
+      // 2. Update Live Mini Browser Renderer Preview
+      const miniWebTxt = document.getElementById("miniWebTxt");
+      const miniStyleBar = document.getElementById("miniStyleBar");
+      const miniJsBadge = document.getElementById("miniJsBadge");
+      const miniJsTxt = document.getElementById("miniJsTxt");
+      const miniPdfCard = document.getElementById("miniPdfCard");
+      const miniPdfTxt = document.getElementById("miniPdfTxt");
+
+      if (st.client.cssReceived) {
+        if (miniStyleBar) miniStyleBar.setAttribute("fill", "#3b82f6");
+      }
+      if (st.client.jsReceived) {
+        if (miniJsBadge) miniJsBadge.setAttribute("fill", "#10b981");
+        if (miniJsTxt) {
+          miniJsTxt.setAttribute("fill", "#ffffff");
+          miniJsTxt.textContent = "JS Hydrated";
+        }
+      }
+      if (st.client.pdfReceived) {
+        if (miniPdfCard) {
+          miniPdfCard.setAttribute("fill", "#fef2f2");
+          miniPdfCard.setAttribute("stroke", "#fecaca");
+          miniPdfCard.setAttribute("opacity", "1");
+        }
+        if (miniPdfTxt) {
+          miniPdfTxt.setAttribute("fill", "#991b1b");
+          miniPdfTxt.textContent = "report.pdf (Loaded)";
+        }
+      }
+      if (st.client.cssReceived && st.client.jsReceived) {
+        if (miniWebTxt) {
+          miniWebTxt.setAttribute("fill", "#059669");
+          miniWebTxt.textContent = "Page Rendered!";
+        }
+      }
+
+      // 3. Update Kernel TCP Lock UI
+      const grpKernelLock = document.getElementById("grpKernelLock");
+      const grpKernelItems = document.getElementById("grpKernelItems");
+      if (grpKernelLock) grpKernelLock.setAttribute("opacity", st.client.kernelLocked ? "1" : "0");
+
+      if (grpKernelItems) {
+        grpKernelItems.innerHTML = st.client.kernelBuffer.map((item, idx) => `
+          <rect x="0" y="${idx * 20}" width="168" height="16" rx="4" fill="#fef2f2" stroke="#fecaca" />
+          <text x="6" y="${idx * 20 + 12}" font-family="JetBrains Mono" font-size="8" fill="#991b1b">
+            ⚠️ ${item.label} (${item.seq})
+          </text>
+        `).join("");
+      }
+
+      // 4. Update QUIC Stream Buffers UI
+      if (currentProto === "http3") {
+        const txtA = document.getElementById("txtQuicA");
+        const txtB = document.getElementById("txtQuicB");
+        const txtC = document.getElementById("txtQuicC");
+
+        if (txtA) txtA.textContent = st.client.pdfReceived ? "Delivered" : st.lossOccurredA ? "Waiting RETX" : `${st.client.quicBuffers.A.length}/4 Chunks`;
+        if (txtB) txtB.textContent = st.client.cssReceived ? "Delivered (0ms HOL)" : `${st.client.quicBuffers.B.length}/2 Chunks`;
+        if (txtC) txtC.textContent = st.client.jsReceived ? "Delivered (0ms HOL)" : `${st.client.quicBuffers.C.length}/2 Chunks`;
+      }
+    }
+
+    function updateRaceLaneUI(st, timeElemId, clientElemId) {
+      const txtTime = document.getElementById(timeElemId);
+      if (txtTime) txtTime.textContent = `${Math.round(st.client.totalTime || simTime)}ms`;
+
+      const clientG = document.getElementById(clientElemId);
+      if (clientG) {
+        const cssStatus = st.client.cssReceived ? "🎨 CSS" : "CSS";
+        const jsStatus = st.client.jsReceived ? "⚡ JS" : "JS";
+        const pdfStatus = st.client.pdfReceived ? "📄 PDF" : "PDF";
+        clientG.innerHTML = `
+          <rect width="180" height="50" rx="8" fill="#f8fafc" stroke="#cbd5e1" />
+          <text x="10" y="20" font-family="JetBrains Mono" font-size="9" fill="#0f172a">FCP: ${Math.round(st.client.fcpTime)}ms</text>
+          <text x="10" y="38" font-family="JetBrains Mono" font-size="9" fill="#64748b">${cssStatus} | ${jsStatus} | ${pdfStatus}</text>
+        `;
+      }
+    }
+
+    function updateTelemetryUI() {
+      const st = currentProto === "race" ? simState.h3 : simState;
+      hudFcp.innerText = `${Math.round(st.client.fcpTime)} ms`;
+      hudHol.innerText = `${Math.round(st.client.holDelay || (st.proto === 'http1' && st.workers.A.elapsed > 0 && !st.client.cssReceived ? st.workers.A.elapsed : 0))} ms`;
+      hudTotal.innerText = `${Math.round(st.client.totalTime || simTime)} ms`;
+    }
+
+    // ==========================================
+    // CHROMEDEVTOOLS-STYLE WATERFALL TIMELINE
+    // ==========================================
+    function renderWaterfallUI() {
+      const st = currentProto === "race" ? simState.h3 : simState;
+      const maxTime = Math.max(1200, simTime + 200);
+
+      const hsDuration = handshakeEnabled ? (st.proto === 'http3' ? baseRtt : baseRtt * 2) : 0;
+      const pctHS = (hsDuration / maxTime) * 100;
+
+      // Track B (CSS)
+      let bStart = pctHS + ((baseRtt/2) / maxTime) * 100;
+      let bWait = (st.workers.B.totalMs / maxTime) * 100;
+      let bHol = st.proto === 'http1' ? ((st.workers.A.totalMs + baseRtt) / maxTime) * 100 : (st.client.kernelLocked ? 30 : 0);
+
+      waterfallTracks.innerHTML = `
+        <!-- Stream A Waterfall Track -->
+        <div class="wf-track">
+          <div class="wf-label"><span style="color: var(--streamA);">●</span> report.pdf</div>
+          <div class="wf-bar-container">
+            ${handshakeEnabled ? `<div class="wf-segment hs" style="left:0; width:${pctHS}%;"></div>` : ''}
+            <div class="wf-segment ttfb" style="left:${pctHS}%; width:${(st.workers.A.totalMs / maxTime)*100}%;"></div>
+            <div class="wf-segment downloadA" style="left:${pctHS + (st.workers.A.totalMs / maxTime)*100}%; width:15%;"></div>
+          </div>
+        </div>
+
+        <!-- Stream B Waterfall Track -->
+        <div class="wf-track">
+          <div class="wf-label"><span style="color: var(--streamB);">●</span> style.css</div>
+          <div class="wf-bar-container">
+            ${handshakeEnabled ? `<div class="wf-segment hs" style="left:0; width:${pctHS}%;"></div>` : ''}
+            ${st.proto === 'http1' ? `<div class="wf-segment blocked" style="left:${pctHS}%; width:${bHol}%;"></div>` : ''}
+            <div class="wf-segment downloadB" style="left:${bStart + (st.proto==='http1'?bHol:0)}%; width:${bWait + 10}%;"></div>
+            ${st.client.fcpTime ? `<div class="wf-marker-fcp" style="left:${(st.client.fcpTime / maxTime)*100}%;"></div>` : ''}
+          </div>
+        </div>
+
+        <!-- Stream C Waterfall Track -->
+        <div class="wf-track">
+          <div class="wf-label"><span style="color: var(--streamC);">●</span> app.js</div>
+          <div class="wf-bar-container">
+            ${handshakeEnabled ? `<div class="wf-segment hs" style="left:0; width:${pctHS}%;"></div>` : ''}
+            ${st.proto === 'http1' ? `<div class="wf-segment blocked" style="left:${pctHS}%; width:${bHol + 10}%;"></div>` : ''}
+            <div class="wf-segment downloadC" style="left:${bStart + (st.proto==='http1'?bHol+10:0)}%; width:${bWait + 8}%;"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Initialize View on Page Load
+    resetSimulation();
+  </script>
+</body>
+</html>
