@@ -109,10 +109,10 @@ Every simulation `index.html` must include these 5 clean vertical bands:
 |---|---|
 | **Syllabus Status** | `LOCKED — Final v1.0 (11 Modules • 56 Core Topics • 15 Case Studies • 10 Interactive Labs)` |
 | **Current Module** | `Module 00: Foundations, Networking & Mental Models` |
-| **Current Topic** | `00.1 The Request-Response Lifecycle: DNS, TCP Handshake, TLS 1.3 & HTTP` |
+| **Current Topic** | `00.2 Protocol Evolution: HTTP/1.1 vs HTTP/2 Multiplexing vs HTTP/3 (QUIC)` |
 | **Stage** | `Completed (Documentation + ByteByteGo-Style Whiteboard Simulation)` |
-| **Next Topic** | `00.2 Protocol Evolution (HTTP/1.1 vs HTTP/2 Multiplexing vs HTTP/3 QUIC)` |
-| **Last Checkpoint Commit** | `a1565d4` (*feat(simulator): refine packet lifecycle UI with clean controls, pause state, and segmented navigation*) |
+| **Next Topic** | `00.3 Communication Paradigms (REST vs gRPC & Protobuf vs GraphQL)` |
+| **Last Checkpoint Commit** | `000ebb2` (*docs(agent): lock master syllabus v1.0 and codify ByteByteGo simulation design system spec*) |
 
 ---
 
@@ -122,7 +122,9 @@ Every simulation `index.html` must include these 5 clean vertical bands:
 - [x] **00.1 The Request-Response Lifecycle** (DNS → TCP 3-Way Handshake → TLS 1.3 → HTTP request/response)
   - *Theory Notes*: [`docs/00-foundations/01-request-response-lifecycle.md`](docs/00-foundations/01-request-response-lifecycle.md)
   - *Interactive Lab*: [`interactive-simulations/00-packet-lifecycle-simulator/`](interactive-simulations/00-packet-lifecycle-simulator/)
-- [ ] **00.2 Protocol Evolution** (HTTP/1.1 Head-of-Line Blocking vs HTTP/2 Multiplexing vs HTTP/3 QUIC over UDP)
+- [x] **00.2 Protocol Evolution** (HTTP/1.1 Head-of-Line Blocking vs HTTP/2 Multiplexing vs HTTP/3 QUIC over UDP)
+  - *Theory Notes*: [`docs/00-foundations/02-protocol-evolution-http1-http2-http3.md`](docs/00-foundations/02-protocol-evolution-http1-http2-http3.md)
+  - *Interactive Lab*: [`interactive-simulations/00-protocol-evolution-simulator/`](interactive-simulations/00-protocol-evolution-simulator/)
 - [ ] **00.3 Communication Paradigms** (REST vs gRPC & Protobuf vs GraphQL, Pagination & API Versioning)
 - [ ] **00.4 Duplex & Real-Time Transport** (WebSockets vs Server-Sent Events vs Long Polling vs WebRTC)
 - [ ] **00.5 Physical Latency, Throughput & Capacity Estimation** (Numbers every engineer must know, Little's Law, QPS/Storage/Bandwidth math)

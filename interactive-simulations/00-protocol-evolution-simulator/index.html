@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protocol Evolution: HTTP/1.1 vs HTTP/2 vs HTTP/3 | Visual Lab</title>
+  <style>
+    :root {
+      --bg-page: #f4f6f9;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f8fafc;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+
+      /* Protocol theme colors */
+      --http1: #d97706; /* Amber */
+      --http1-bg: #fffbeb;
+      --http1-border: #fcd34d;
+
+      --http2: #0284c7; /* Sky */
+      --http2-bg: #f0f9ff;
+      --http2-border: #7dd3fc;
+
+      --http3: #059669; /* Emerald */
+      --http3-bg: #ecfdf5;
+      --http3-border: #6ee7b7;
+
+      /* Stream colors */
+      --streamA: #ef4444; /* Red - Heavy / Stalled */
+      --streamB: #3b82f6; /* Blue - CSS */
+      --streamC: #10b981; /* Green - JS */
+
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0284c7, #059669);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+      flex-shrink: 0;
+    }
+
+    .brand-title h1 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+    }
+
+    .brand-title p {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .route-chip {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+    }
+
+    .back-btn {
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.4rem 0.75rem;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+
+    .back-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* App Layout */
+    .app-shell {
+      max-width: 1260px;
+      margin: 1.25rem auto 2.5rem;
+      padding: 0 1.25rem;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+
+    /* Protocol Mode Switcher (Hero Tabs) */
+    .protocol-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.85rem;
+    }
+
+    @media (max-width: 820px) {
+      .protocol-tabs { grid-template-columns: 1fr; }
+    }
+
+    .proto-card {
+      background: var(--bg-surface);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.15rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .proto-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+    }
+
+    .proto-card.active[data-proto="http1"] {
+      border-color: var(--http1);
+      background: var(--http1-bg);
+      box-shadow: 0 0 0 1px var(--http1);
+    }
+
+    .proto-card.active[data-proto="http2"] {
+      border-color: var(--http2);
+      background: var(--http2-bg);
+      box-shadow: 0 0 0 1px var(--http2);
+    }
+
+    .proto-card.active[data-proto="http3"] {
+      border-color: var(--http3);
+      background: var(--http3-bg);
+      box-shadow: 0 0 0 1px var(--http3);
+    }
+
+    .proto-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      width: fit-content;
+    }
+
+    .badge-http1 { background: #fef3c7; color: #b45309; }
+    .badge-http2 { background: #e0f2fe; color: #0369a1; }
+    .badge-http3 { background: #d1fae5; color: #047857; }
+
+    .proto-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .proto-card p {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Main Stage Card */
+    .stage-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stage-toolbar {
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--http2);
+    }
+
+    .status-dot.stalled {
+      background: var(--streamA);
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Control Groups */
+    .control-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
+      background: #fff;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s;
+    }
+
+    button:hover {
+      background: var(--bg-subtle);
+      border-color: #94a3b8;
+    }
+
+    .btn-primary {
+      background: #0f172a;
+      color: #fff;
+      border-color: #0f172a;
+    }
+
+    .btn-primary:hover {
+      background: #1e293b;
+      color: #fff;
+    }
+
+    .btn-chaos {
+      background: #fff1f2;
+      color: #be123c;
+      border-color: #fecdd3;
+    }
+
+    .btn-chaos:hover {
+      background: #ffe4e6;
+      border-color: #fda4af;
+    }
+
+    .segmented {
+      display: inline-flex;
+      background: #e2e8f0;
+      padding: 2px;
+      border-radius: 8px;
+    }
+
+    .segmented button {
+      border: none;
+      background: transparent;
+      padding: 0.3rem 0.65rem;
+      font-size: 0.76rem;
+      border-radius: 6px;
+      color: var(--text-secondary);
+    }
+
+    .segmented button.active {
+      background: #fff;
+      color: var(--text-primary);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Diagram Viewport (Inline SVG & Canvas) */
+    .viewport {
+      background: #fcfdff;
+      background-image: radial-gradient(#d8e0eb 1.1px, transparent 1.1px);
+      background-size: 20px 20px;
+      position: relative;
+      min-height: 440px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    svg {
+      width: 100%;
+      height: 380px;
+      overflow: visible;
+    }
+
+    /* Live HUD bar */
+    .hud-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      padding: 0.85rem 1.25rem;
+      background: #fff;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 768px) {
+      .hud-bar { grid-template-columns: 1fr 1fr; }
+    }
+
+    .hud-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .hud-stat span {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .hud-stat strong {
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      color: var(--text-primary);
+    }
+
+    /* Explanatory Deep-Dive Card */
+    .explanation-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .explanation-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .explanation-header h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .explanation-text {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .pill-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.25rem;
+    }
+
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <a href="../index.html" class="brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </div>
+      <div class="brand-title">
+        <h1>Protocol Evolution: HOL Blocking Sandbox</h1>
+        <p>Interactive Comparison: HTTP/1.1 vs HTTP/2 vs HTTP/3 (QUIC)</p>
+      </div>
+    </a>
+    <div class="header-right">
+      <span class="route-chip">Module 00.2</span>
+      <a href="../index.html" class="back-btn">← Simulation Hub</a>
+    </div>
+  </header>
+
+  <main class="app-shell">
+
+    <!-- Protocol Mode Selection Tabs -->
+    <div class="protocol-tabs">
+      <div class="proto-card active" data-proto="http1">
+        <span class="proto-badge badge-http1">HTTP/1.1 (1999)</span>
+        <h3>Persistent Keep-Alive</h3>
+        <p>Single FIFO queue. Responses must arrive in exact request order. Stalled requests cause <strong>Application HOL Blocking</strong>.</p>
+      </div>
+      <div class="proto-card" data-proto="http2">
+        <span class="proto-badge badge-http2">HTTP/2 (2015)</span>
+        <h3>Binary Framing & Multiplexing</h3>
+        <p>Interleaved frames on 1 TCP socket. Eliminates application HOL blocking, but introduces <strong>TCP-Layer HOL Blocking</strong> on packet loss.</p>
+      </div>
+      <div class="proto-card" data-proto="http3">
+        <span class="proto-badge badge-http3">HTTP/3 (2022)</span>
+        <h3>QUIC over UDP</h3>
+        <p>Independent streams on UDP datagrams. Lost packet on Stream A never delays Streams B & C. True 0-RTT resilience.</p>
+      </div>
+    </div>
+
+    <!-- Main Visual Stage -->
+    <div class="stage-card">
+
+      <!-- Stage Controls & Toolbar -->
+      <div class="stage-toolbar">
+        <div class="status-pill">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Ready to dispatch 3 requests</span>
+        </div>
+
+        <div class="control-actions">
+          <button class="btn-primary" id="btnDispatch">▶ Dispatch Requests</button>
+          <button id="btnPause">⏸ Pause</button>
+          <button id="btnReset">🔄 Reset</button>
+
+          <button class="btn-chaos" id="btnDropPacket">💥 Drop Packet (Stream A)</button>
+
+          <!-- Speed Controls -->
+          <div class="segmented" id="speedControls">
+            <button class="active" data-speed="0.5">0.5x Slow</button>
+            <button data-speed="1.0">1.0x Normal</button>
+            <button data-speed="2.0">2.0x Fast</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diagram Viewport (Inline SVG) -->
+      <div class="viewport" id="viewport">
+        <svg id="stageSvg" viewBox="0 0 1100 380">
+          <defs>
+            <!-- Drop Shadow Filters -->
+            <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.08" flood-color="#0f172a" />
+            </filter>
+            <!-- Pipe Patterns -->
+            <pattern id="tcpPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="20" x2="20" y2="0" stroke="#cbd5e1" stroke-width="1.5" />
+            </pattern>
+          </defs>
+
+          <!-- Client Entity (Left) -->
+          <g transform="translate(40, 60)" filter="url(#cardShadow)">
+            <rect width="180" height="260" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+            <rect width="180" height="42" rx="14" fill="#f8fafc" />
+            <line x1="0" y1="42" x2="180" y2="42" stroke="#e2e8f0" stroke-width="1.2" />
+            <text x="18" y="26" font-family="Inter" font-weight="700" font-size="13" fill="#0f172a">💻 BROWSER (SF)</text>
+            <text x="18" y="65" font-family="JetBrains Mono" font-size="11" fill="#64748b">Resource Queue:</text>
+
+            <!-- Resource A Indicator -->
+            <g transform="translate(18, 80)">
+              <rect width="144" height="42" rx="8" fill="#fef2f2" stroke="#fecaca" stroke-width="1" />
+              <circle cx="16" cy="21" r="5" fill="#ef4444" />
+              <text x="28" y="18" font-family="Inter" font-weight="600" font-size="11" fill="#991b1b">Stream A: report.pdf</text>
+              <text x="28" y="32" font-family="JetBrains Mono" font-size="9" fill="#ef4444" id="labelA">Pending (Heavy)</text>
+            </g>
+
+            <!-- Resource B Indicator -->
+            <g transform="translate(18, 134)">
+              <rect width="144" height="42" rx="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1" />
+              <circle cx="16" cy="21" r="5" fill="#3b82f6" />
+              <text x="28" y="18" font-family="Inter" font-weight="600" font-size="11" fill="#1e40af">Stream B: style.css</text>
+              <text x="28" y="32" font-family="JetBrains Mono" font-size="9" fill="#3b82f6" id="labelB">Pending (Fast)</text>
+            </g>
+
+            <!-- Resource C Indicator -->
+            <g transform="translate(18, 188)">
+              <rect width="144" height="42" rx="8" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1" />
+              <circle cx="16" cy="21" r="5" fill="#10b981" />
+              <text x="28" y="18" font-family="Inter" font-weight="600" font-size="11" fill="#065f46">Stream C: app.js</text>
+              <text x="28" y="32" font-family="JetBrains Mono" font-size="9" fill="#10b981" id="labelC">Pending (Fast)</text>
+            </g>
+
+            <text x="18" y="252" font-family="JetBrains Mono" font-size="10" fill="#94a3b8" id="clientRenderStatus">Renderer: Idle</text>
+          </g>
+
+          <!-- Middle Transport Pipes Canvas / Vector Layer -->
+          <g id="transportPipeGroup">
+            <!-- Rendered dynamically by JavaScript based on protocol mode -->
+          </g>
+
+          <!-- Server Entity (Right) -->
+          <g transform="translate(880, 60)" filter="url(#cardShadow)">
+            <rect width="180" height="260" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+            <rect width="180" height="42" rx="14" fill="#f8fafc" />
+            <line x1="0" y1="42" x2="180" y2="42" stroke="#e2e8f0" stroke-width="1.2" />
+            <text x="18" y="26" font-family="Inter" font-weight="700" font-size="13" fill="#0f172a">🏢 API SERVER</text>
+            <text x="18" y="65" font-family="JetBrains Mono" font-size="11" fill="#64748b">Worker Execution:</text>
+
+            <g transform="translate(18, 80)">
+              <rect width="144" height="42" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+              <text x="12" y="19" font-family="Inter" font-size="11" font-weight="600" fill="#334155">Worker A (SQL)</text>
+              <text x="12" y="33" font-family="JetBrains Mono" font-size="9" fill="#64748b" id="serverWorkerA">2000ms Latency</text>
+            </g>
+
+            <g transform="translate(18, 134)">
+              <rect width="144" height="42" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+              <text x="12" y="19" font-family="Inter" font-size="11" font-weight="600" fill="#334155">Worker B (Static)</text>
+              <text x="12" y="33" font-family="JetBrains Mono" font-size="9" fill="#64748b" id="serverWorkerB">50ms Memory</text>
+            </g>
+
+            <g transform="translate(18, 188)">
+              <rect width="144" height="42" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+              <text x="12" y="19" font-family="Inter" font-size="11" font-weight="600" fill="#334155">Worker C (Static)</text>
+              <text x="12" y="33" font-family="JetBrains Mono" font-size="9" fill="#64748b" id="serverWorkerC">20ms Memory</text>
+            </g>
+
+            <text x="18" y="252" font-family="JetBrains Mono" font-size="10" fill="#94a3b8">Linux Kernel Socket</text>
+          </g>
+
+          <!-- Dynamic Packet Layer -->
+          <g id="packetLayer"></g>
+        </svg>
+      </div>
+
+      <!-- Live HUD Metrics -->
+      <div class="hud-bar">
+        <div class="hud-stat">
+          <span>Current Protocol</span>
+          <strong id="hudProto">HTTP/1.1 (Keep-Alive)</strong>
+        </div>
+        <div class="hud-stat">
+          <span>Active TCP Sockets</span>
+          <strong id="hudSockets">1 Socket (Shared)</strong>
+        </div>
+        <div class="hud-stat">
+          <span>HOL Blocking Delay</span>
+          <strong id="hudHolDelay" style="color: var(--streamA);">0 ms</strong>
+        </div>
+        <div class="hud-stat">
+          <span>Page Complete Time</span>
+          <strong id="hudTotalTime">0 ms</strong>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- First-Principles Explanation Deep Dive -->
+    <div class="explanation-panel">
+      <div class="explanation-header">
+        <span style="font-size: 1.1rem;">💡</span>
+        <h4 id="explanationTitle">HTTP/1.1: The Application Head-of-Line Bottleneck</h4>
+      </div>
+      <p class="explanation-text" id="explanationText">
+        In HTTP/1.1, responses cannot be tagged with stream IDs. The server is strictly bound to send data back in the exact order requested. 
+        Because <strong>Stream A (report.pdf)</strong> takes 2000ms, <strong>Stream B (style.css)</strong> and <strong>Stream C (app.js)</strong> finish in memory in 20ms but are completely trapped behind Stream A!
+      </p>
+      <div class="pill-tags" id="explanationTags">
+        <span class="tag">RFC 2616</span>
+        <span class="tag">FIFO Queue</span>
+        <span class="tag">Application HOL Blocking</span>
+        <span class="tag">Browser 6-Connection Limit</span>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // --- STATE ---
+    let currentProto = "http1";
+    let isRunning = false;
+    let isPaused = false;
+    let runToken = 0;
+    let speedMultiplier = 0.5;
+    let packetDropped = false;
+
+    // DOM Refs
+    const protoCards = document.querySelectorAll(".proto-card");
+    const pipeGroup = document.getElementById("transportPipeGroup");
+    const packetLayer = document.getElementById("packetLayer");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const btnDispatch = document.getElementById("btnDispatch");
+    const btnPause = document.getElementById("btnPause");
+    const btnReset = document.getElementById("btnReset");
+    const btnDropPacket = document.getElementById("btnDropPacket");
+    const speedButtons = document.querySelectorAll("#speedControls button");
+
+    const hudProto = document.getElementById("hudProto");
+    const hudSockets = document.getElementById("hudSockets");
+    const hudHolDelay = document.getElementById("hudHolDelay");
+    const hudTotalTime = document.getElementById("hudTotalTime");
+
+    const labelA = document.getElementById("labelA");
+    const labelB = document.getElementById("labelB");
+    const labelC = document.getElementById("labelC");
+    const clientRenderStatus = document.getElementById("clientRenderStatus");
+    const explanationTitle = document.getElementById("explanationTitle");
+    const explanationText = document.getElementById("explanationText");
+    const explanationTags = document.getElementById("explanationTags");
+
+    // --- PROTOCOL DESCRIPTIONS ---
+    const protoMetadata = {
+      http1: {
+        title: "HTTP/1.1: The Application Head-of-Line Bottleneck",
+        text: "In HTTP/1.1, responses cannot be tagged with stream IDs. The server is strictly bound to send data back in the exact order requested. Because Stream A (report.pdf) takes 2000ms, Stream B (style.css) and Stream C (app.js) finish in memory in 20ms but are completely trapped behind Stream A!",
+        tags: ["RFC 2616", "FIFO Queue", "Application HOL Blocking", "Browser 6-Connection Limit"],
+        sockets: "1 Socket (Shared FIFO)",
+        protoName: "HTTP/1.1 (Keep-Alive)"
+      },
+      http2: {
+        title: "HTTP/2: Stream Multiplexing & The Hidden TCP Trap",
+        text: "HTTP/2 breaks requests into binary frames tagged with a 31-bit Stream ID. Streams A, B, and C interleave freely down one TCP socket! But here is the catch: TCP guarantees contiguous byte delivery. Click 'Drop Packet' to see how 1 lost packet on Stream A freezes ALL streams at the TCP socket buffer!",
+        tags: ["RFC 7540", "Binary Framing", "Multiplexed Streams", "TCP-Layer HOL Blocking"],
+        sockets: "1 Single TCP Socket",
+        protoName: "HTTP/2 (Binary Framing)"
+      },
+      http3: {
+        title: "HTTP/3: QUIC over UDP — True Stream Independence",
+        text: "HTTP/3 discards TCP and runs over UDP datagrams using QUIC. Streams are independent: if Stream A loses a packet, only Stream A waits for retransmission. Stream B (CSS) and Stream C (JS) deliver to the browser without a single microsecond of delay!",
+        tags: ["RFC 9000", "QUIC Transport", "UDP Datagrams", "Zero HOL Blocking", "0-RTT Handshake"],
+        sockets: "UDP Connection ID (0x9f4a)",
+        protoName: "HTTP/3 (QUIC / UDP)"
+      }
+    };
+
+    // --- RENDER PIPES ---
+    function renderPipes() {
+      pipeGroup.innerHTML = "";
+
+      if (currentProto === "http1") {
+        // Single narrow serialized TCP pipe
+        pipeGroup.innerHTML = `
+          <g transform="translate(240, 150)">
+            <rect width="620" height="80" rx="12" fill="#fff" stroke="#cbd5e1" stroke-width="2" />
+            <rect width="620" height="80" rx="12" fill="url(#tcpPattern)" opacity="0.3" />
+            <text x="310" y="24" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#94a3b8" text-anchor="middle">
+              SINGLE TCP SOCKET PIPE (Strict FIFO Serialized)
+            </text>
+            <line x1="0" y1="50" x2="620" y2="50" stroke="#e2e8f0" stroke-dasharray="4,4" />
+          </g>
+        `;
+      } else if (currentProto === "http2") {
+        // Wide Multiplexed TCP pipe
+        pipeGroup.innerHTML = `
+          <g transform="translate(240, 110)">
+            <rect width="620" height="160" rx="14" fill="#fff" stroke="#0284c7" stroke-width="2" stroke-dasharray="0" />
+            <rect width="620" height="160" rx="14" fill="#f0f9ff" opacity="0.4" />
+            <text x="310" y="28" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#0284c7" text-anchor="middle">
+              SINGLE TCP PIPE (Multiplexed Binary Frames: Stream IDs 1, 3, 5)
+            </text>
+            <!-- 3 Lane dividing guidelines -->
+            <line x1="20" y1="65" x2="600" y2="65" stroke="#bae6fd" stroke-dasharray="4,4" />
+            <line x1="20" y1="115" x2="600" y2="115" stroke="#bae6fd" stroke-dasharray="4,4" />
+            <text x="30" y="55" font-family="JetBrains Mono" font-size="9" fill="#0369a1">Stream A (Heavy)</text>
+            <text x="30" y="105" font-family="JetBrains Mono" font-size="9" fill="#0369a1">Stream B (CSS)</text>
+            <text x="30" y="150" font-family="JetBrains Mono" font-size="9" fill="#0369a1">Stream C (JS)</text>
+          </g>
+        `;
+      } else if (currentProto === "http3") {
+        // 3 Independent QUIC UDP Channels
+        pipeGroup.innerHTML = `
+          <!-- Lane A -->
+          <g transform="translate(240, 80)">
+            <rect width="620" height="55" rx="10" fill="#fff" stroke="#059669" stroke-width="1.8" />
+            <rect width="620" height="55" rx="10" fill="#ecfdf5" opacity="0.3" />
+            <text x="310" y="20" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#059669" text-anchor="middle">
+              QUIC Stream A (UDP Datagrams - Independent Buffer)
+            </text>
+          </g>
+          <!-- Lane B -->
+          <g transform="translate(240, 160)">
+            <rect width="620" height="55" rx="10" fill="#fff" stroke="#059669" stroke-width="1.8" />
+            <rect width="620" height="55" rx="10" fill="#ecfdf5" opacity="0.3" />
+            <text x="310" y="20" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#059669" text-anchor="middle">
+              QUIC Stream B (UDP Datagrams - Independent Buffer)
+            </text>
+          </g>
+          <!-- Lane C -->
+          <g transform="translate(240, 240)">
+            <rect width="620" height="55" rx="10" fill="#fff" stroke="#059669" stroke-width="1.8" />
+            <rect width="620" height="55" rx="10" fill="#ecfdf5" opacity="0.3" />
+            <text x="310" y="20" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#059669" text-anchor="middle">
+              QUIC Stream C (UDP Datagrams - Independent Buffer)
+            </text>
+          </g>
+        `;
+      }
+    }
+
+    // --- PROTOCOL SWITCHING ---
+    protoCards.forEach(card => {
+      card.addEventListener("click", () => {
+        protoCards.forEach(c => c.classList.remove("active"));
+        card.classList.add("active");
+        currentProto = card.dataset.proto;
+        resetSimulation();
+      });
+    });
+
+    function updateMetadataUI() {
+      const meta = protoMetadata[currentProto];
+      hudProto.innerText = meta.protoName;
+      hudSockets.innerText = meta.sockets;
+      explanationTitle.innerText = meta.title;
+      explanationText.innerText = meta.text;
+      explanationTags.innerHTML = meta.tags.map(t => `<span class="tag">${t}</span>`).join("");
+    }
+
+    // --- RESET ---
+    function resetSimulation() {
+      runToken++;
+      isRunning = false;
+      isPaused = false;
+      packetDropped = false;
+      packetLayer.innerHTML = "";
+      statusDot.className = "status-dot";
+      statusText.innerText = "Ready to dispatch 3 requests";
+      btnPause.innerText = "⏸ Pause";
+
+      labelA.innerText = "Pending (Heavy)";
+      labelA.style.color = "var(--streamA)";
+      labelB.innerText = "Pending (Fast)";
+      labelB.style.color = "var(--streamB)";
+      labelC.innerText = "Pending (Fast)";
+      labelC.style.color = "var(--streamC)";
+
+      clientRenderStatus.innerText = "Renderer: Idle";
+      clientRenderStatus.style.color = "var(--text-muted)";
+
+      hudHolDelay.innerText = "0 ms";
+      hudTotalTime.innerText = "0 ms";
+
+      renderPipes();
+      updateMetadataUI();
+    }
+
+    // --- ANIMATION HELPER ---
+    function sleep(ms) {
+      return new Promise(resolve => {
+        const myToken = runToken;
+        const checkInterval = 25;
+        let elapsed = 0;
+        const interval = setInterval(() => {
+          if (myToken !== runToken) {
+            clearInterval(interval);
+            return;
+          }
+          if (!isPaused) {
+            elapsed += checkInterval * (speedMultiplier / 0.5);
+            if (elapsed >= ms) {
+              clearInterval(interval);
+              resolve();
+            }
+          }
+        }, checkInterval);
+      });
+    }
+
+    function createPacketSvg(id, label, color, x, y, width = 75, height = 32) {
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("id", id);
+      g.setAttribute("transform", `translate(${x}, ${y})`);
+      g.innerHTML = `
+        <rect width="${width}" height="${height}" rx="6" fill="${color}" stroke="#ffffff" stroke-width="1.5" />
+        <text x="${width / 2}" y="${height / 2 + 4}" font-family="JetBrains Mono" font-weight="700" font-size="10" fill="#ffffff" text-anchor="middle">
+          ${label}
+        </text>
+      `;
+      packetLayer.appendChild(g);
+      return g;
+    }
+
+    async function movePacket(el, startX, startY, endX, endY, durationMs) {
+      const myToken = runToken;
+      const startTime = performance.now();
+      const scaledDuration = durationMs / (speedMultiplier / 0.5);
+
+      return new Promise(resolve => {
+        function frame(now) {
+          if (myToken !== runToken) return;
+          if (isPaused) {
+            requestAnimationFrame(frame);
+            return;
+          }
+          const progress = Math.min(1, (now - startTime) / scaledDuration);
+          const curX = startX + (endX - startX) * progress;
+          const curY = startY + (endY - startY) * progress;
+          el.setAttribute("transform", `translate(${curX}, ${curY})`);
+
+          if (progress < 1) {
+            requestAnimationFrame(frame);
+          } else {
+            resolve();
+          }
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+
+    // --- RUN SIMULATION ---
+    btnDispatch.addEventListener("click", async () => {
+      if (isRunning) return;
+      resetSimulation();
+      isRunning = true;
+      statusDot.className = "status-dot running";
+      statusText.innerText = `Dispatching requests under ${protoMetadata[currentProto].protoName}...`;
+
+      const myToken = runToken;
+
+      if (currentProto === "http1") {
+        // --- HTTP/1.1 SIMULATION (APPLICATION HOL BLOCKING) ---
+        labelA.innerText = "Requesting...";
+        labelB.innerText = "Queued (Waiting)";
+        labelC.innerText = "Queued (Waiting)";
+
+        // Request A sent
+        const reqA = createPacketSvg("reqA", "GET /report", "#ef4444", 220, 175);
+        await movePacket(reqA, 220, 175, 870, 175, 1000);
+        reqA.remove();
+
+        // Server processing A
+        statusText.innerText = "Server executing heavy query A (2000ms)...";
+        hudHolDelay.innerText = "1980 ms HOL Delay!";
+        await sleep(1800);
+
+        // Response A returns
+        statusText.innerText = "Response A traveling back down pipe...";
+        const resA = createPacketSvg("resA", "200 A (10MB)", "#ef4444", 870, 175, 85, 32);
+        await movePacket(resA, 870, 175, 220, 175, 1200);
+        resA.remove();
+        labelA.innerText = "Delivered (2000ms)";
+        labelA.style.color = "var(--http3)";
+
+        // Now Request B can finally be sent
+        statusText.innerText = "Pipe free! Now Request B can travel...";
+        labelB.innerText = "Requesting...";
+        const reqB = createPacketSvg("reqB", "GET /style", "#3b82f6", 220, 175);
+        await movePacket(reqB, 220, 175, 870, 175, 600);
+        reqB.remove();
+
+        const resB = createPacketSvg("resB", "200 B (CSS)", "#3b82f6", 870, 175, 75, 32);
+        await movePacket(resB, 870, 175, 220, 175, 600);
+        resB.remove();
+        labelB.innerText = "Delivered (Stalled 2050ms)";
+        labelB.style.color = "var(--http3)";
+
+        // Request C sent
+        statusText.innerText = "Finally Request C can travel...";
+        labelC.innerText = "Requesting...";
+        const reqC = createPacketSvg("reqC", "GET /app.js", "#10b981", 220, 175);
+        await movePacket(reqC, 220, 175, 870, 175, 500);
+        reqC.remove();
+
+        const resC = createPacketSvg("resC", "200 C (JS)", "#10b981", 870, 175, 75, 32);
+        await movePacket(resC, 870, 175, 220, 175, 500);
+        resC.remove();
+        labelC.innerText = "Delivered (Stalled 2070ms)";
+        labelC.style.color = "var(--http3)";
+
+        clientRenderStatus.innerText = "Page Rendered: 2070ms (HOL Stalled)";
+        hudTotalTime.innerText = "2070 ms";
+        statusText.innerText = "HTTP/1.1 Finished: Severe HOL Block experienced!";
+      }
+
+      else if (currentProto === "http2") {
+        // --- HTTP/2 SIMULATION (MULTIPLEXING & TCP HOL BLOCKING) ---
+        labelA.innerText = "Multiplexing...";
+        labelB.innerText = "Multiplexing...";
+        labelC.innerText = "Multiplexing...";
+
+        statusText.innerText = "Streaming interleaved binary frames down 1 TCP socket...";
+
+        // Packets: Frame A1, Frame B1, Frame C1, Frame A2
+        const pB = createPacketSvg("pB", "Frame B1", "#3b82f6", 870, 175, 70, 28);
+        const pC = createPacketSvg("pC", "Frame C1", "#10b981", 870, 215, 70, 28);
+        const pA1 = createPacketSvg("pA1", "Frame A1", "#ef4444", 870, 135, 70, 28);
+
+        // Animate all 3 simultaneously
+        const moveB = movePacket(pB, 870, 175, 220, 175, 1200);
+        const moveC = movePacket(pC, 870, 215, 220, 215, 1000);
+        const moveA = movePacket(pA1, 870, 135, 220, 135, 1600);
+
+        if (packetDropped) {
+          await sleep(500);
+          statusDot.className = "status-dot stalled";
+          statusText.innerText = "💥 PACKET LOSS on Frame A1! TCP socket buffer frozen!";
+          hudHolDelay.innerText = "All Streams Frozen by TCP!";
+          pA1.setAttribute("opacity", "0.4");
+
+          // Visual freeze box over client
+          clientRenderStatus.innerText = "TCP BLOCKED: Waiting for Retransmission...";
+          clientRenderStatus.style.color = "var(--streamA)";
+
+          await sleep(1400);
+          statusText.innerText = "Retransmitting Packet A1... All streams resuming.";
+          pA1.setAttribute("opacity", "1");
+        }
+
+        await Promise.all([moveB, moveC, moveA]);
+
+        pB.remove();
+        pC.remove();
+        pA1.remove();
+
+        labelC.innerText = "Delivered (50ms)";
+        labelC.style.color = "var(--http3)";
+        labelB.innerText = "Delivered (80ms)";
+        labelB.style.color = "var(--http3)";
+        labelA.innerText = "Delivered (Stream A)";
+        labelA.style.color = "var(--http3)";
+
+        clientRenderStatus.innerText = packetDropped ? "Page Rendered (Delayed by TCP HOL)" : "Page Rendered: 80ms Fast Multiplexed!";
+        hudTotalTime.innerText = packetDropped ? "1520 ms (Packet loss)" : "120 ms";
+        statusText.innerText = "HTTP/2 Complete: Streams interleaved successfully.";
+      }
+
+      else if (currentProto === "http3") {
+        // --- HTTP/3 SIMULATION (QUIC OVER UDP - INDEPENDENT STREAMS) ---
+        labelA.innerText = "Streaming QUIC A...";
+        labelB.innerText = "Streaming QUIC B...";
+        labelC.innerText = "Streaming QUIC C...";
+
+        statusText.innerText = "Dispatching independent UDP datagrams per stream...";
+
+        const qA = createPacketSvg("qA", "UDP A1", "#ef4444", 870, 95, 75, 26);
+        const qB = createPacketSvg("qB", "UDP B1 (CSS)", "#3b82f6", 870, 175, 85, 26);
+        const qC = createPacketSvg("qC", "UDP C1 (JS)", "#10b981", 870, 255, 80, 26);
+
+        // Move B and C smoothly and fast
+        const moveB = movePacket(qB, 870, 175, 220, 175, 900).then(() => {
+          qB.remove();
+          labelB.innerText = "Delivered (35ms - Rendered!)";
+          labelB.style.color = "var(--http3)";
+        });
+
+        const moveC = movePacket(qC, 870, 255, 220, 255, 750).then(() => {
+          qC.remove();
+          labelC.innerText = "Delivered (25ms - Rendered!)";
+          labelC.style.color = "var(--http3)";
+        });
+
+        let moveA;
+        if (packetDropped) {
+          // Stream A drops packet and retransmits, but B and C NEVER STOP!
+          statusText.innerText = "💥 Packet dropped on Stream A! Streams B and C continue uninterrupted!";
+          hudHolDelay.innerText = "0 ms (True Independence)";
+          hudHolDelay.style.color = "var(--http3)";
+
+          moveA = (async () => {
+            await movePacket(qA, 870, 95, 500, 95, 500);
+            qA.setAttribute("opacity", "0.3");
+            await sleep(800);
+            qA.setAttribute("opacity", "1");
+            await movePacket(qA, 500, 95, 220, 95, 600);
+            qA.remove();
+            labelA.innerText = "Retransmitted & Delivered";
+            labelA.style.color = "var(--http3)";
+          })();
+        } else {
+          moveA = movePacket(qA, 870, 95, 220, 95, 1200).then(() => {
+            qA.remove();
+            labelA.innerText = "Delivered (QUIC)";
+            labelA.style.color = "var(--http3)";
+          });
+        }
+
+        await Promise.all([moveB, moveC, moveA]);
+
+        clientRenderStatus.innerText = "CSS & JS Rendered in 35ms! Zero HOL delay.";
+        hudTotalTime.innerText = "35 ms (Critical Path)";
+        statusText.innerText = "HTTP/3 Complete: True stream independence verified.";
+      }
+
+      isRunning = false;
+      statusDot.className = "status-dot";
+    });
+
+    btnPause.addEventListener("click", () => {
+      if (!isRunning) return;
+      isPaused = !isPaused;
+      btnPause.innerText = isPaused ? "▶ Resume" : "⏸ Pause";
+      statusDot.className = isPaused ? "status-dot" : "status-dot running";
+    });
+
+    btnReset.addEventListener("click", () => resetSimulation());
+
+    btnDropPacket.addEventListener("click", () => {
+      packetDropped = !packetDropped;
+      btnDropPacket.style.background = packetDropped ? "#fecdd3" : "#fff1f2";
+      btnDropPacket.innerText = packetDropped ? "💥 Packet Drop: ACTIVE" : "💥 Drop Packet (Stream A)";
+    });
+
+    speedButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        speedButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        speedMultiplier = parseFloat(btn.dataset.speed);
+      });
+    });
+
+    // Initialize
+    resetSimulation();
+  </script>
+</body>
+</html>
