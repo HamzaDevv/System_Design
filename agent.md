@@ -52,7 +52,9 @@ For every single topic in our roadmap, we execute this sequence:
 ## 🗺️ Master Curriculum Checkpoint Tracker
 
 ### [Module 00: Foundations, Networking & Mental Models](docs/00-foundations/)
-- [ ] **00.1 The Request-Response Lifecycle** (DNS $\rightarrow$ TCP 3-Way Handshake $\rightarrow$ TLS 1.3 $\rightarrow$ HTTP request/response)
+- [x] **00.1 The Request-Response Lifecycle** (DNS → TCP 3-Way Handshake → TLS 1.3 → HTTP request/response)
+  - *Theory Notes*: [`docs/00-foundations/01-request-response-lifecycle.md`](docs/00-foundations/01-request-response-lifecycle.md)
+  - *Interactive Lab*: [`interactive-simulations/00-packet-lifecycle-simulator/`](interactive-simulations/00-packet-lifecycle-simulator/)
 - [ ] **00.2 Protocol Evolution** (HTTP/1.1 vs HTTP/2 Multiplexing vs HTTP/3 QUIC over UDP)
 - [ ] **00.3 Communication Paradigms** (REST vs gRPC & Protobuf vs GraphQL)
 - [ ] **00.4 Duplex & Streaming** (WebSockets vs Server-Sent Events vs Long Polling)

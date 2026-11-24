@@ -54,7 +54,7 @@ This project is built around a two-step learning methodology:
 
 | Module | Core Topics | Interactive Visual Lab | Status |
 |---|---|---|:---:|
-| **[00. Foundations & Networking](docs/00-foundations/)** | Request Lifecycle, OSI vs TCP/IP, HTTP/1.1 vs HTTP/2 vs HTTP/3, WebSockets, gRPC, Latency Numbers Every Engineer Must Know, Capacity Estimations | Network Packet Lifecycle Simulator | 🟡 In Progress |
+| **[00. Foundations & Networking](docs/00-foundations/)** | Request Lifecycle, OSI vs TCP/IP, HTTP/1.1 vs HTTP/2 vs HTTP/3, WebSockets, gRPC, Latency Numbers Every Engineer Must Know, Capacity Estimations | [Packet Lifecycle Simulator](interactive-simulations/00-packet-lifecycle-simulator/) | 🟢 Active |
 | **[01. Scalability & Load Balancing](docs/01-scalability-load-balancing/)** | Horizontal vs Vertical, L4 vs L7 Load Balancing, Reverse Proxies, Consistent Hashing Ring, Virtual Nodes | [Load Balancer & Consistent Hash Ring](interactive-simulations/) | ⚪ Planned |
 | **[02. Caching & Edge Computing](docs/02-caching-and-cdn/)** | Cache-Aside, Write-Through/Back, Eviction (LRU/LFU/ARC), Cache Stampede/Avalanche, Redis Internals, CDN & Anycast | [Cache Eviction & Stampede Playground](interactive-simulations/) | ⚪ Planned |
 | **[03. Storage Systems & Databases](docs/03-database-storage-systems/)** | SQL vs NoSQL, ACID vs BASE, Replication Lag, Sharding Strategies, B+Trees vs LSM-Trees, Bloom Filters, 2PC & Sagas | [B+Tree vs LSM-Tree Visualizer](interactive-simulations/) | ⚪ Planned |
