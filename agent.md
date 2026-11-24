@@ -123,7 +123,7 @@ Every simulation `index.html` must include these 5 clean vertical bands:
 | **Current Topic** | `00.2 Protocol Evolution: HTTP/1.1 vs HTTP/2 Multiplexing vs HTTP/3 (QUIC)` |
 | **Stage** | `Completed (Refactored Unified Work Tree + Origin History + Revision To-Do + Simulation)` |
 | **Next Topic** | `00.3 Communication Paradigms (REST vs gRPC & Protobuf vs GraphQL)` |
-| **Last Checkpoint Commit** | `Pending Unified Refactor Commit` |
+| **Last Checkpoint Commit** | `679d695` (*refactor(structure): unify work tree by module/topic with co-located labs, origin histories, and revision checklists*) |
 
 ---
 
